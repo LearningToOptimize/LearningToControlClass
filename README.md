@@ -1,4 +1,4 @@
-# Special Topics on Optimal Control and Learning — Fall 2025  
+# Special Topics on Optimal Control and Learning — Fall 2025 (ISYE 8803 VAN)
 *Georgia Institute of Technology – Fridays 2 pm ET*
 
 **Designers:** Andrew Rosemberg & Michael Klamkin  
