@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.13
+# v0.20.15
 
 using Markdown
 using InteractiveUtils
@@ -57,13 +57,13 @@ begin
 	MarkdownLiteral.@markdown(
 """
 
-[^cmu]: Zachary Manchester et al. Optimal Control and Reinforcement Learning at Carnegie Mellon University - [CMU 16-745]("https://optimalcontrol.ri.cmu.edu/")
+[^cmu]: Zachary Manchester et al. [Optimal Control and Reinforcement Learning at Carnegie Mellon University - CMU 16-745](https://optimalcontrol.ri.cmu.edu/)
 
-[^OptProx]: Van Hentenryck, P., 2024. Fusing Artificial Intelligence and Optimization with Trustworthy Optimization Proxies. Collections, 57(02).
+[^OptProx]: Van Hentenryck, P., 2024. [Fusing Artificial Intelligence and Optimization with Trustworthy Optimization Proxies](https://www.siam.org/publications/siam-news/articles/fusing-artificial-intelligence-and-optimization-with-trustworthy-optimization-proxies/). Collections, 57(02).
 		
-[^ArmManip]: Guechi, E.H., Bouzoualegh, S., Zennir, Y. and Blažič, S., 2018. MPC control and LQ optimal control of a two-link robot arm: A comparative study. Machines, 6(3), p.37.
+[^ArmManip]: Guechi, E.H., Bouzoualegh, S., Zennir, Y. and Blažič, S., 2018. [MPC control and LQ optimal control of a two-link robot arm: A comparative study](https://www.mdpi.com/2075-1702/6/3/37). Machines, 6(3), p.37.
 
-[^ZachMIT]: Zachary Manchester talk at MIT - [MIT Robotics - Zac Manchester - Composable Optimization for Robotic Motion Planning and Control]("https://www.youtube.com/watch?v=eSleutHuc0w&ab_channel=MITRobotics").
+[^ZachMIT]: Zachary Manchester talk at MIT - [MIT Robotics - Zac Manchester - Composable Optimization for Robotic Motion Planning and Control](https://www.youtube.com/watch?v=eSleutHuc0w&ab_channel=MITRobotics).
 		
 """
 )
@@ -211,7 +211,9 @@ md"[^OptProx]"
 """
 
 # ╔═╡ 45275d44-e268-43cb-8156-feecd916a6da
-@htl """
+# ╠═╡ skip_as_script = true
+#=╠═╡
+Foldable(md"#### LearningToOptimize Project", @htl """
 <div style="
   border:1px solid #ccc;
   border-radius:6px;
@@ -346,7 +348,8 @@ md"[^OptProx]"
   </p>
 
 </div>
-"""
+""")
+  ╠═╡ =#
 
 # ╔═╡ c08f511e-b91d-4d17-a286-96469c31568a
 md"## Example: Robotic Arm Manipulation"
@@ -481,7 +484,7 @@ md"State $x$ is everything you need to define to determine the how your system w
 md"### Example: Pendulum"
 
 # ╔═╡ baa3993c-96b0-474e-b5b4-f9eaea642a49
-function pendulum(θ_deg = 60; L = 4, fsize = (520, 450), _xlims=nothing)
+function pendulum(θ_deg = 60; L = 4, fsize = (520, 450), _xlims=nothing, _ylims=(-5, 5))
     θ       = deg2rad(θ_deg)
     pivot   = Point2f(0, 0)
     mass    = Point2f(-L*sin(θ), -L*cos(θ))        # rod tip
@@ -495,11 +498,9 @@ function pendulum(θ_deg = 60; L = 4, fsize = (520, 450), _xlims=nothing)
                xgridvisible   = false,
                ygridvisible   = false)
     hidespines!(ax)
-
-	_y = -L*cos(θ)
-	if _y > 0 
-		ylims!(ax, (-1, _y + 1))
-	end
+    if !isnothing(_ylims)
+	    ylims!(ax, _ylims)
+    end
 
 	if !isnothing(_xlims)
 		xlims!(ax, _xlims)
@@ -585,7 +586,7 @@ x \in S^{1} \times \mathbb{R} & \text{Cylinder}
 """)
 
 # ╔═╡ 4d598933-05a9-44fa-b5a7-f7e1c7afb094
-md"## Control--Afine Systems
+md"## Control--Affine Systems
 
 Non--linear Systems of the form:
 ```math
@@ -594,7 +595,7 @@ Non--linear Systems of the form:
 
  $\implies$ Non--linear in the state but affine in the input/control.
 
-Control--Afine Systems are common in many mechanical systems.
+Control--Affine Systems are common in many mechanical systems.
 
 "
 

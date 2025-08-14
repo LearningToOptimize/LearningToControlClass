@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.13
+# v0.20.15
 
 using Markdown
 using InteractiveUtils
@@ -9,7 +9,6 @@ begin
 	class_dir = dirname(@__DIR__)
 	import Pkg
 	Pkg.activate("..")
-	Pkg.status()
 end
 
 # ╔═╡ 054eb7cf-cb60-41a0-9a87-215e36dcf53d
