@@ -86,7 +86,7 @@ In this course, we are interested in problems with the following structure:
    \phantom{\substack{(\mathbf u_1,\mathbf x_1)\\\mathrm{s.t.}}}%
    \!\!\!\!\!\!\!\!\!\!(\mathbf u_1,\mathbf x_1)\in\mathcal X_1(\mathbf x_0)%
 }{%
-   \!\!\!\!c(\mathbf x_1,\mathbf y_1)%
+   \!\!\!\!c(\mathbf x_1,\mathbf u_1)%
 }
 +\mathbb{E}_1\Bigl[
    \quad \cdots
@@ -123,7 +123,7 @@ constraints can be generally posed as:
     &\mathcal{X}_t(\mathbf{x}_{t-1}, w_t)= 
     \begin{cases}
         f(\mathbf{x}_{t-1}, w_t, \mathbf{u}_t) = \mathbf{x}_t \\
-        h(\mathbf{x}_t, \mathbf{y}_t) \geq 0 
+        h(\mathbf{x}_t, \mathbf{u}_t) \geq 0 
     \end{cases}
 \end{align}
 ```
@@ -135,7 +135,7 @@ where the outgoing state of the system $\mathbf{x}_t$ is a
 transformation based on the incoming state, the realized uncertainty,
 and the control variables. In the Markov Decision Process (MDP) framework, we refer to $f$ as the "transition kernel" of the system. State and
 control variables are restricted further by additional constraints
-captured by $h(\mathbf{x}_t, \mathbf{y}_t) \geq 0$.  We
+captured by $h(\mathbf{x}_t, \mathbf{u}_t) \geq 0$.  We
 consider policies that map the past information into decisions: $\pi_t : (\mathbf{x}_{t-1}, w_t) \rightarrow \mathbf{x}_t$. In
 period $t$, an optimal policy is given by the solution of the dynamic
 equations:
