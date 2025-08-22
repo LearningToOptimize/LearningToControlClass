@@ -38,6 +38,9 @@ using CairoMakie
 # ╔═╡ 29df2037-456f-4f98-9e32-71037e3d76c4
 using ForwardDiff
 
+# ╔═╡ 52712a4b-8c4b-4637-943d-fdb0f5e9e944
+using InfiniteOpt, JuMP, Ipopt
+
 # ╔═╡ ec473e69-d5ec-4d6a-b868-b89dadb85705
 ChooseDisplayMode()
 
@@ -1396,7 +1399,7 @@ end
 
 # ╔═╡ f6c075f9-9d79-46ba-870e-e12c2b3357df
 """
-	pendulum_forward_euler(fun, x0, Tf, h) 
+	forward_euler(fun, x0, Tf, h) 
 
 Foward Euler Integrator.
 
@@ -1406,7 +1409,7 @@ Arguments:
  - `Tf`: Final Time;
  - `h`: Time--Step duration;
 """
-function pendulum_forward_euler(fun, x0, Tf, h)    
+function forward_euler(fun, x0, Tf, h)    
     t = Array(range(0,Tf,step=h)) # Time-Steps
     
     x_hist = zeros(length(x0),length(t)) # Visited States
@@ -1431,7 +1434,7 @@ md"""
 begin
 	if sim1
 		local x0 = [.1; 0] # Starting point very close to the Lyapunov Stable point!
-		x_hist1, t_hist1 = pendulum_forward_euler(pendulum_dynamics, x0, 5., .1)
+		x_hist1, t_hist1 = forward_euler(pendulum_dynamics, x0, 5., .1)
 		plot(t_hist1, x_hist1[1,:], xlabel="t", ylabel="x(t)", label="")
 	end
 end
@@ -1597,7 +1600,7 @@ Fits a cubic polynomial to to $x(t)$.
 """
 
 # ╔═╡ f722b8da-0440-4bc1-8124-84305ef4bd4d
-function fd_pendulum_rk4(xk, h)
+function fd_rk4(xk, h)
     f1 = pendulum_dynamics(xk)
     f2 = pendulum_dynamics(xk + 0.5*h*f1)
     f3 = pendulum_dynamics(xk + 0.5*h*f2)
@@ -1606,14 +1609,14 @@ function fd_pendulum_rk4(xk, h)
 end
 
 # ╔═╡ 22ab7266-894c-457c-ad19-1c86bbedc0ac
-function pendulum_rk4(fun, x0, Tf, h)    
+function rk4(fun, x0, Tf, h)    
     t = Array(range(0,Tf,step=h))
     
     x_hist = zeros(length(x0),length(t))
     x_hist[:,1] .= x0
     
     for k = 1:(length(t)-1)
-        x_hist[:,k+1] .= fd_pendulum_rk4(x_hist[:,k], h)
+        x_hist[:,k+1] .= fd_rk4(x_hist[:,k], h)
     end
     
     return x_hist, t
@@ -1627,7 +1630,7 @@ md"""
 # ╔═╡ ebe3f468-e6b7-4afa-8bb6-5ef9ca182e65
 begin
 	local x0 = [.1; 0]
-	x_hist2, t_hist2 = pendulum_rk4(pendulum_dynamics, x0, 100, 0.1)
+	x_hist2, t_hist2 = rk4(pendulum_dynamics, x0, 100, 0.1)
 	if sim2
 		plot(t_hist2, x_hist2[1,:], xlabel="t", ylabel="x(t)", label="")
 	end
@@ -1635,7 +1638,7 @@ end
 
 # ╔═╡ 9d6ecd2f-e060-45c9-9a99-03f5f530cf2e
 begin
-	Ad = ForwardDiff.jacobian(x -> fd_pendulum_rk4(x, 0.01), [0; 0])
+	Ad = ForwardDiff.jacobian(x -> fd_rk4(x, 0.01), [0; 0])
 	norm.(eigvals(Ad))
 end
 
@@ -1644,7 +1647,7 @@ begin
 	local eignorm = zeros(100)
 	local h = LinRange(0,1,100)
 	for k = 1:length(eignorm)
-	    eignorm[k] = max(norm.(eigvals(ForwardDiff.jacobian(x -> fd_pendulum_rk4(x, h[k]), [0; 0])))...)
+	    eignorm[k] = max(norm.(eigvals(ForwardDiff.jacobian(x -> fd_rk4(x, h[k]), [0; 0])))...)
 	end
 	plot(h,eignorm, xlabel="Δₜ", ylabel=L"|Λ|_{∞}", label="")
 end
@@ -1665,7 +1668,7 @@ x_{t+1} = x_t + \underbrace{\Delta_t \cdot f(x_{t+1}, u_{t+1})}_{f_d}
 """
 
 # ╔═╡ 1f0b068a-da49-4fc5-a91b-fc6da9ecc434
-function pendulum_backward_euler(fun, x0, Tf, dt)
+function backward_euler(fun, x0, Tf, dt)
     t = Array(range(0,Tf,step=dt))
     
     x_hist = zeros(length(x0),length(t))
@@ -1692,7 +1695,7 @@ md"""
 # ╔═╡ b857efd5-dba1-4872-b133-59e80d7cd489
 begin
 	local x0 = [.1; 0]
-	x_hist3, t_hist3 = pendulum_backward_euler(pendulum_dynamics, x0, 10, 0.01)
+	x_hist3, t_hist3 = backward_euler(pendulum_dynamics, x0, 10, 0.01)
 	if sim3
 		plot(t_hist3, x_hist3[1,:], xlabel="t", ylabel="x(t)", label="")
 	end
@@ -1700,6 +1703,246 @@ end
 
 # ╔═╡ de4807ca-4e17-4020-9810-5f7c0fcae9a3
 question_box(md"### Why most simulators use Backward--Euler?")
+
+# ╔═╡ b38f09c2-8850-4400-9d63-9cd730077470
+md"""## Optimal Control via Lobatto (Hermite–Simpson) Direct Collocation
+
+Let's close our class with a practical example of how to use the dynamics in a control problem.
+
+We will use 
+
+![logo_infinite](https://raw.githubusercontent.com/infiniteopt/InfiniteOpt.jl/refs/heads/master/full_logo.png)
+
+to solve a simple 2D pendulum control problem.
+
+InfiniteOpt.jl is a package for solving optimal control problems with infinite-dimensional variables, such as those arising from direct collocation methods. It allows us to define the dynamics of a system, constraints, and objectives in a straightforward way, leveraging the power of Julia's optimization ecosystem.
+InfiniteOpt.jl will be in charge of the integration and optimization of the system dynamics, making it easier to solve complex control problems.
+
+The dynamics of the double pendulum:
+
+```math
+\begin{bmatrix}
+\dot{\theta}_1 \\
+\dot{\theta}_2 \\
+\ddot{\theta}_1 \\
+\ddot{\theta}_2
+\end{bmatrix}
+=
+\begin{bmatrix}
+\omega_1 \\
+\omega_2 \\
+\frac{1}{M_{11}(\theta_2)}\left(\tau_1 - M_{12}(\theta_2)\ddot{\theta}_2 - c_1(\theta_2, \omega_1, \omega_2) - g_1(\theta_1, \theta_2)\right) \\
+\frac{1}{M_{22}}\left(M_{12}(\theta_2)\ddot{\theta}_1 - c_2(\theta_2, \omega_1) - g_2(\theta_1, \theta_2)\right)
+\end{bmatrix}
+```
+
+where the matrices $M_{ij}(\theta_2)$, $c_i(\theta_2, \omega_1, \omega_2)$, and $g_i(\theta_1, \theta_2)$ are defined as follows:
+```math
+\begin{align*}
+M_{11}(\theta_2) = (m_1 + m_2) \ell_1^2 + m_2 \ell_2^2 + 2 m_2 \ell_1 \ell_2 \cos(\theta_2) \\
+M_{12}(\theta_2) = m_2 \ell_2^2 + m_2 \ell_1 \ell_2 \cos(\theta_2)\\
+M_{22} = m_2 \ell_2^2\\
+c_1(\theta_2, \omega_1, \omega_2) = -m_2 \ell_1 \ell_2 \sin(\theta_2)\\(2\omega_1\omega_2 + \omega_2^2)\\
+c_2(\theta_2, \omega_1) = m_2 \ell_1 \ell_2 \sin(\theta_2)\omega_1^2\\
+g_1(\theta_1, \theta_2) = (m_1 + m_2) g \ell_1 \sin(\theta_1) + m_2 g \ell_2 \sin(\theta_1 + \theta_2)\\
+g_2(\theta_1, \theta_2) = m_2 g \ell_2 \sin(\theta_1 + \theta_2)\\
+\end{align*}
+```
+
+The goal is to control the torque $\tau_1$ and $\tau_2$ applied at the joint to move the pendulum from an initial state to a final state while minimizing the control effort and tracking a desired trajectory:
+
+```math
+\begin{align*}
+\min_{\tau_1} &\int_0^{T_f} \left( w_\theta (\theta_1 - \theta_{1,ref})^2 + w_\theta (\theta_2 - \theta_{2,ref})^2 + \rho (\tau_1^2) \right) dt \\
+\text{subject to:}
+\dot{\theta}_1 &= \omega_1 \\
+\dot{\theta}_2 &= \omega_2 \\
+\ddot{\theta}_1 &= \frac{1}{M_{11}(\theta_2)}\left(\tau_1 - M_{12}(\theta_2)\ddot{\theta}_2 - c_1(\theta_2, \omega_1, \omega_2) - g_1(\theta_1, \theta_2)\right) \\
+\ddot{\theta}_2 &= \frac{1}{M_{22}}\left(M_{12}(\theta_2)\ddot{\theta}_1 - c_2(\theta_2, \omega_1) - g_2(\theta_1, \theta_2)\right) \\
+\theta_1(0) &= \theta_{1,0}, \quad \theta_2(0) = \theta_{2,0}, \quad \omega_1(0) = \omega_{1,0}, \quad \omega_2(0) = \omega_{2,0} \\
+\theta_1(T_f) &= \theta_{1,f}, \quad \theta_2(T_f) = \theta_{2,f}, \quad \omega_1(T_f) = \omega_{1,f}, \quad \omega_2(T_f) = \omega_{2,f}
+\end{align*}
+```
+
+"""
+
+# ╔═╡ b52a09e7-e3e8-431a-ab91-6e5627138789
+begin
+    const m1, m2 = 1.0, 1.0
+    const ℓ1, ℓ2 = 1.0, 1.0
+    const I1, I2 = m1*ℓ1^2, m2*ℓ2^2          # simple rods about the joint
+    const g = 9.81
+    const b1, b2 = 0.02, 0.02                # small viscous damping
+    const τmax = 8.0                          # torque bound at joint 1 (underactuated)
+    const Tf = 4.0                 # horizon [s]
+    const Ne = 40                  # mesh intervals (coarse elements)
+	const grid = collect(range(0, Tf; length = Ne+1))
+end
+
+# ╔═╡ 249aee30-22b1-4b56-a13b-f2bc0d8376d5
+begin
+	m = InfiniteModel(Ipopt.Optimizer)
+
+    # Time parameter with Orthogonal Collocation (Gauss–Lobatto nodes)
+    @infinite_parameter(
+        m, t ∈ [0.0, Tf],
+        num_supports     = Ne + 1                 # element endpoints
+    )
+
+    # Angles, velocities, torques as infinite variables in t
+    InfiniteOpt.@variable(m, θ1, Infinite(t))
+    InfiniteOpt.@variable(m, θ2, Infinite(t))
+    InfiniteOpt.@variable(m, ω1, Infinite(t))
+    InfiniteOpt.@variable(m, ω2, Infinite(t))
+    InfiniteOpt.@variable(m, τ1, Infinite(t))
+
+    # Time derivatives (works for higher order too)
+    dθ1 = @deriv(θ1, t)
+    dθ2 = @deriv(θ2, t)
+    dω1 = @deriv(ω1, t)
+    dω2 = @deriv(ω2, t)
+
+	# Kinematics: θ̇ = ω
+    @constraint(m, dθ1 == ω1)
+    @constraint(m, dθ2 == ω2)
+
+    # Helper terms
+    haux(θ2)     = m2*ℓ1*ℓ2*sin(θ2)
+    c(θ2)     = m2*ℓ1*ℓ2*cos(θ2)
+
+    M11(θ2)   = (m1+m2)*ℓ1^2 + m2*ℓ2^2 + 2c(θ2)
+    M12(θ2)   = m2*ℓ2^2 + c(θ2)
+    M22       = m2*ℓ2^2         # independent of θ2
+
+    g1(θ1,θ2) = (m1+m2)*g*ℓ1*sin(θ1) + m2*g*ℓ2*sin(θ1+θ2)
+    g2(θ1,θ2) = m2*g*ℓ2*sin(θ1+θ2)
+
+    c1(θ2,ω1,ω2) = -haux(θ2)*(2*ω1*ω2 + ω2^2)
+    c2(θ2,ω1)    =  haux(θ2)*ω1^2
+
+    # Dynamics in manipulator form: M(q) q̈ + C(q, q̇) + G(q) = τ
+    @constraint(m, M11(θ2)*dω1 + M12(θ2)*dω2 + c1(θ2, ω1, ω2) + g1(θ1, θ2) == τ1)
+    @constraint(m, M12(θ2)*dω1 + M22*dω2         + c2(θ2, ω1)       + g2(θ1, θ2) == 0.0)
+
+	# Boundary Conditions
+	θ1₀, θ2₀, ω1₀, ω2₀ = 0.0, 0.0, 0.0, 0.0
+    θ1f, θ2f, ω1f, ω2f = π,   0.0, 0.0, 0.0
+
+    @constraint(m, θ1(0.0) == θ1₀)
+    @constraint(m, θ2(0.0) == θ2₀)
+    @constraint(m, ω1(0.0) == ω1₀)
+    @constraint(m, ω2(0.0) == ω2₀)
+
+    @constraint(m, θ1(Tf) == θ1f)
+    @constraint(m, θ2(Tf) == θ2f)
+    @constraint(m, ω1(Tf) == ω1f)
+    @constraint(m, ω2(Tf) == ω2f)
+
+	wθ = 10.0     # state tracking weight
+    ρ  = 1e-3     # control effort weight
+
+    # Track desired rest at the terminal target while regularizing torque
+    @objective(m, Min,
+        ∫( wθ*((θ1 - θ1f)^2 + (θ2 - θ2f)^2) + ρ*(τ1^2), t )
+    )
+
+	# To help convergence - initial guesses
+	set_start_value_function(θ1, t -> θ1₀ + (θ1f - θ1₀)*(t/Tf))
+    set_start_value_function(θ2, t -> θ2₀ + (θ2f - θ2₀)*(t/Tf))
+    set_start_value_function(ω1, t -> 0.0)
+    set_start_value_function(ω2, t -> 0.0)
+    set_start_value_function(τ1, t -> 0.0)
+
+	println(m)
+end
+
+# ╔═╡ e71f70a5-3256-4c8c-b7ed-9b0d7ae83b61
+begin
+    optimize!(m)
+end
+
+# ╔═╡ 88fc99d5-df8a-4aad-afcb-2fed12d20dd1
+begin
+    # pull horizon and data at the mesh ENDPOINTS provided to the model ———
+    Tanim = Tf
+    times = grid               # element endpoints only
+    θ1e = value.(θ1)
+    θ2e = value.(θ2)
+    ω1e = value.(ω1)
+    ω2e = value.(ω2)
+
+    # ——— cubic Hermite (Hermite–Simpson-compatible) interpolant on [t0,t1] ———
+    hermite(y0, y1, yp0, yp1, t, t0, t1) = begin
+        h = t1 - t0
+        s = (t - t0) / h
+        h00 =  2s^3 - 3s^2 + 1
+        h10 =    s^3 - 2s^2 + s
+        h01 = -2s^3 + 3s^2
+        h11 =    s^3 -   s^2
+        return h00*y0 + h*h10*yp0 + h01*y1 + h*h11*yp1
+    end
+
+    # locate interval index k with t ∈ [times[k], times[k+1]]
+    function bracket(ts::AbstractVector{<:Real}, t::Real)
+        t ≤ ts[1]  && return 1
+        t ≥ ts[end] && return length(ts)-1
+        k = searchsortedfirst(ts, t)
+        return max(1, k-1)
+    end
+
+    # θ1(t), θ2(t) reconstructed via the HS cubic using endpoint values & derivatives
+    function θ_at(t::Real)
+        k = bracket(times, t)
+        t0, t1 = times[k], times[k+1]
+        θ1t = hermite(θ1e[k], θ1e[k+1], ω1e[k], ω1e[k+1], t, t0, t1)
+        θ2t = hermite(θ2e[k], θ2e[k+1], ω2e[k], ω2e[k+1], t, t0, t1)
+        return θ1t, θ2t
+    end
+
+    # forward kinematics
+    function link_positions(θ1::Real, θ2::Real; l1::Real=1.0, l2::Real=1.0)
+        x1 =  l1*sin(θ1);         y1 = -l1*cos(θ1)
+        x2 =  x1 + l2*sin(θ1+θ2); y2 = y1 - l2*cos(θ1+θ2)
+        return (x1, y1, x2, y2)
+    end
+
+    # ——— MP4 export (60 FPS) ———
+    fps   = 60
+    nfr   = Int(ceil(fps * Tanim))
+    ts    = range(0, Tanim; length = nfr)
+
+    fig   = Figure(size = (720, 560))
+    ax    = Axis(fig[1,1], aspect = 1, title = "Double Pendulum — Hermite–Simpson reconstruction",
+                 xlabel = "x", ylabel = "y")
+
+    L = (ℓ1 + ℓ2) * 1.15
+    xlims!(ax, -L, L); ylims!(ax, -L, L)
+    lines!(ax, [-L, L], [0, 0], color=:gray, linewidth=2, linestyle=:dash)
+
+    p1 = Observable(Point2f(0,0))
+    p2 = Observable(Point2f(0,0))
+    p3 = Observable(Point2f(0,0))
+
+    lines!(ax, lift(p1,p2) do a,b; [a,b] end; linewidth=4)
+    lines!(ax, lift(p2,p3) do a,b; [a,b] end; linewidth=4)
+    scatter!(ax, p1; markersize=10, color=:black)
+    scatter!(ax, p2; markersize=12, color=:white, strokewidth=2)
+    scatter!(ax, p3; markersize=12, color=:white, strokewidth=2)
+
+    outfile = "double_pendulum_swingup.mp4"
+    record(fig, outfile, ts; framerate=fps) do tt
+        θ1t, θ2t = θ_at(tt)
+        x1, y1, x2, y2 = link_positions(θ1t, θ2t; l1=ℓ1, l2=ℓ2)
+        p1[] = Point2f(0, 0)
+        p2[] = Point2f(x1, y1)
+        p3[] = Point2f(x2, y2)
+    end
+
+    md"Saved **$outfile** (duration $(round(nfr/fps; digits=2)) s @ $fps FPS) with Hermite–Simpson reconstruction."
+end
+
+# ╔═╡ f039123c-90a3-4eb6-a4cd-d49aaea3e54d
+PlutoUI.LocalResource(joinpath(class_dir, "double_pendulum_swingup.mp4"))
 
 # ╔═╡ Cell order:
 # ╟─13b12c00-6d6e-11f0-3780-a16e73360478
@@ -1805,5 +2048,12 @@ question_box(md"### Why most simulators use Backward--Euler?")
 # ╟─81940b23-b05d-4f1b-be82-0c34bd0ad21a
 # ╠═1f0b068a-da49-4fc5-a91b-fc6da9ecc434
 # ╟─86ce1303-e77c-4b93-a2ed-dc0c54a1f191
-# ╠═b857efd5-dba1-4872-b133-59e80d7cd489
+# ╟─b857efd5-dba1-4872-b133-59e80d7cd489
 # ╟─de4807ca-4e17-4020-9810-5f7c0fcae9a3
+# ╟─b38f09c2-8850-4400-9d63-9cd730077470
+# ╠═52712a4b-8c4b-4637-943d-fdb0f5e9e944
+# ╠═b52a09e7-e3e8-431a-ab91-6e5627138789
+# ╠═249aee30-22b1-4b56-a13b-f2bc0d8376d5
+# ╠═e71f70a5-3256-4c8c-b7ed-9b0d7ae83b61
+# ╟─88fc99d5-df8a-4aad-afcb-2fed12d20dd1
+# ╟─f039123c-90a3-4eb6-a4cd-d49aaea3e54d
