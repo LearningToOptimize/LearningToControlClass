@@ -64,6 +64,8 @@ begin
 [^ArmManip]: Guechi, E.H., Bouzoualegh, S., Zennir, Y. and Blažič, S., 2018. [MPC control and LQ optimal control of a two-link robot arm: A comparative study](https://www.mdpi.com/2075-1702/6/3/37). Machines, 6(3), p.37.
 
 [^ZachMIT]: Zachary Manchester talk at MIT - [MIT Robotics - Zac Manchester - Composable Optimization for Robotic Motion Planning and Control](https://www.youtube.com/watch?v=eSleutHuc0w&ab_channel=MITRobotics).
+
+[^Hespanha]: Hespanha, J.P., 2018. Linear systems theory. Princeton university press.
 		
 """
 )
@@ -430,7 +432,9 @@ section_outline(md"A Crash Course:",md" (Continuous-Time) Dynamics
 ")
 
 # ╔═╡ 8ea866a6-de0f-4812-8f59-2aebec709243
-md"General form for a smooth system:
+md"
+
+The general form for the Continuous-Time Dynamics of a smooth system:
 
 ```math
 \dot{x} = f(x,u) \quad \text{First-Order Ordinary Differential Equation (ODE)}
@@ -799,23 +803,71 @@ A differentiable physics engine for robotics that simulates systems using optimi
 warning_box(md"But in general we need a *ReFeynman* of the these equations!")
 
 # ╔═╡ 5f35a169-887f-477f-b010-167627f7ce4c
-md"## Linear Systems
+md"## (State–Space) Linear Systems
+
+A system is **Continuous Linear** (CLTV / CLTI) if it can be written as:
 
 ```math
 \dot{x} = A_{t}x + B_{t}u
 ```
 
-When Time--Invariant vs Time--Variant?
+In state–space literature we often also see a **Output Equation**:
+```math
+y = C_{t}x + D_{t}u
+```
 
-Non--Linear Systems are often approximated by Linear Systems (locally).
+but we will neglect it for now.
+"
+
+# ╔═╡ 5c8f6256-e818-4aa1-aea0-02422df8f77c
+Foldable(md" When do we have a Time--Invariant (TI) vs Time--Variant (TV)?", md"""
+
+When (A,B) are constant we have an LTI system; otherwise it is LTV.
+
+""")
+
+# ╔═╡ a3f47dad-3cfa-4f6d-9dc6-d4b09d209f86
+md"
+**Non--Linear Systems are often approximated by Linear Systems (locally).**
 "
 
 # ╔═╡ e860d92b-cc8f-479b-a0fc-e5f7a11ae1fd
 Foldable(md" $\dot{x} = f(x,u) \; \implies \; A=? \; B=?$", md"""
 
+Suppose now that we apply our dynamics equation to an input:
+
 ```math
-A= \frac{\partial f}{\partial x}, \quad A= \frac{\partial f}{\partial u}
+u(t) = u_{eq} + \delta u(t), \quad t \ge 0
 ```
+where $u_{eq}$ is an fixed input and $\delta u(t)$ is a perturbation function such that the input is close 
+but not equal to $u_{eq}$ and similarly we perturb the initial condition:
+
+```math
+x(0) = x_e + \delta x(0)
+```
+
+We will define the deviation from the reference state as:
+```math
+\delta x(t) = x(t) - x_e, \quad t \ge 0
+```
+
+To determine the evolution of $\delta x(t)$, we can expand the dynamics around the reference point using a Taylor expansion:
+
+```math
+\dot{\delta x}(t) = f(x_e + \delta x(t), u_{eq} + \delta u(t))
+```
+```math
+=\frac{\partial f}{\partial x}\bigg|_{(x_e, u_{eq})} \delta x(t) + \frac{\partial f}{\partial u}\bigg|_{(x_e, u_{eq})} \delta u(t) + \mathcal{O}(\|\delta x\|^2) + \mathcal{O}(\|\delta u\|^2)
+```
+
+Considering just the first-order terms we obtain:
+
+```math
+A= \frac{\partial f}{\partial x}|_{(x_e,u_e)}
+, \quad B= \frac{\partial f}{\partial u}|_{(x_e,u_e)}
+```
+
+**Attention!** The linearization describes perturbations around the reference $(x_e,u_e)$; it is valid only while $\|\delta x\|$ and $\|\delta u\|$ remain small.
 
 """)
 
@@ -829,14 +881,19 @@ The problem becomes convex!!
 # ╔═╡ 2936c97e-a407-4e56-952f-0a2dfb7acf83
 md"""## Equilibria
 
-A point at which the system is and will remain at "rest":
+A **Equilibrium** point $(x_{\mathrm{eq}},u_{\mathrm{eq}})$ is one at which the system is and will remain at "rest":
 
 ```math
-\dot{x} = f(x,u) = 0
+\dot{x} = f(x_{\mathrm{eq}},u_{\mathrm{eq}}) = 0
 ```
 
 The root of the dynamic equations!
 
+In this case,
+
+```math
+x(t) = x_{\mathrm{eq}}, \; u(t) = u_{\mathrm{eq}} \; \forall t
+``` 
 """
 
 # ╔═╡ 1a154d04-2b33-43b6-9cb6-accd935de7b7
@@ -1080,6 +1137,208 @@ But the $2^{\text{nd}}$ case is still not asymptotically stable!
 
 # ╔═╡ da8a1e40-7e7c-472a-933a-c585754270bd
 question_box(md"Can we add a continuous controler to make it asymptotically stable?")
+
+# ╔═╡ 211f75ed-8acb-4261-bf97-8fc70be2a79b
+Columns(md"""
+### Example Unicycle Model
+
+Consider a unicycle moving in a plane, described by the continuous-time dynamics
+
+```math
+\dot p_x = v\cos\theta,\qquad
+\dot p_y = v\sin\theta,\qquad
+\dot\theta = \omega ,
+```
+
+where the control input is given by
+$u = [v,\,\omega]^\top$ and $(p_x, p_y)$ are the Cartesian coordinates of the wheel and $\theta$ its orientation. 
+
+#### Coordinate transformation
+
+Introduce the new coordinates
+
+```math
+x = \begin{bmatrix}x_1\\x_2\\x_3\end{bmatrix}
+:=
+\begin{bmatrix}
+p_x\cos\theta + (p_y-1)\sin\theta \\[4pt]
+-\,p_x\sin\theta + (p_y-1)\cos\theta \\[4pt]
+\theta
+\end{bmatrix}
+```
+
+This transformation can be viewed as a rotation of the position vector about $\theta$.
+""",@htl """
+
+<img src="https://media.licdn.com/dms/image/v2/D4E22AQEL2gwfuHbjyg/feedshare-shrink_2048_1536/B4EZbV9cNyHMAo-/0/1747346377441?e=1758758400&v=beta&t=KsIL2efm-3OBWsn8rRMRdqVBDIk65og6WGYxMo7pwZc">
+
+<img src="https://media.licdn.com/dms/image/v2/D4E22AQHjrdv5VJpqYw/feedshare-shrink_1280/B4EZbV9cOjGkAo-/0/1747346378871?e=1758758400&v=beta&t=i1gPZeObZyh-tJurAUPvYcpW-El8fx8oIMoG51G9oxw">
+
+""")
+
+# ╔═╡ 7e7ce801-a510-4ef2-910b-9e10b685ea58
+md"""[Mini Wheelbot ICRA2025](https://www.linkedin.com/posts/sebastian-trimpe-2472a0a3_icra2025-ieee-robotics-activity-7328901914195103746-zr5j/)"""
+
+# ╔═╡ 7ad76460-e60c-4579-bee0-ac6f3c511877
+Foldable(md"#### Nonlinear state-space representation",
+md"""
+Differentiating each component gives
+
+```math
+\dot x_1 = v + \omega x_2, \qquad
+\dot x_2 = -\omega x_1, \qquad
+\dot x_3 = \omega.
+```
+
+Thus the system in compact form is
+
+```math
+\dot x =
+\begin{bmatrix}
+v + \omega x_2 \\[2pt]
+-\omega x_1 \\[2pt]
+\omega
+\end{bmatrix}
+```
+
+This shows a control-affine nonlinear system.
+"""		
+)
+
+# ╔═╡ e055fdc3-fb83-4c13-85c9-6edcb661e2dd
+Foldable(md"#### Linearization around the equilibrium ($x^{\ast} = 0, \; u^{\ast} = 0$)",
+md"""
+Define perturbations $\delta x = x - x^{\ast}, \; \delta u = u - u^{\ast}$.
+The linearized dynamics are obtained from the Jacobians
+
+```math
+A = \left.\frac{\partial f}{\partial x}\right|_{(x^{\ast},u^{\ast})}, 
+\quad
+B = \left.\frac{\partial f}{\partial u}\right|_{(x^{\ast},u^{\ast})}.
+```
+
+Evaluating,
+
+```math
+A = 0_{3\times 3},
+\qquad
+B =
+\begin{bmatrix}
+1 & 0 \\
+0 & 0 \\
+0 & 1
+\end{bmatrix}.
+```
+
+"""		
+)
+
+# ╔═╡ db1c0c1e-9f3b-44b6-8974-6d5ab5e5e8b7
+md"""
+## Local Linearizations around Trajectories
+
+Often it is convenient to consider perturbations around an arbitrary (feasible) reference trajectory (*ref*) ($x_{ref}(t)$, $u_{ref}(t)$) instead of an equilibrium point.
+
+Now, assuming an input perturbed by a small signal $\delta u(t)$:
+```math
+u(t) = u_{ref}(t) + \delta u(t), \quad t \ge 0
+```
+and a deviation from the reference initial condition:
+```math
+x(0) = x_{ref}(0) + \delta x(0)
+```
+We can define the deviation from the reference state as:
+```math
+\delta x(t) = x(t) - x_{ref}(t), \quad t \ge 0
+```
+To determine the evolution of $\delta x(t)$, we can expand the dynamics around the reference point using a Taylor expansion:
+```math
+\dot{\delta x}(t) = f(x_{ref}(t) + \delta x(t), u_{ref}(t) + \delta u(t))
+```
+```math
+=\frac{\partial f}{\partial x}\bigg|_{(x_{ref}(t), u_{ref}(t))} \delta x(t) + \frac{\partial f}{\partial u}\bigg|_{(x_{ref}(t), u_{ref}(t))} \delta u(t) + \mathcal{O}(\|\delta x\|^2) + \mathcal{O}(\|\delta u\|^2)
+```
+Considering just the first-order terms we obtain:
+```math
+A(t)= \frac{\partial f}{\partial x}|_{(x_{ref}(t),u_{ref}(t))}
+, \quad B(t)= \frac{\partial f}{\partial u}|_{(x_{ref}(t),u_{ref}(t))}
+```
+
+ > In general, local linearizations around trajectories lead to LTV systems because the partial derivatives need to be computed along the trajectory. However, for some nonlinear systems there are trajectories for which local linearizations actually lead to LTI systems. For models of vehicles (cars, airplanes, helicopters, hovercraft, submarines, etc.) trajectories that lead to LTI local linearizations are called trimming trajectories. They often correspond to motion along straight lines, circumferences, or helices. [^Hespanha]
+
+"""
+
+# ╔═╡ 04b6560f-aee2-41fd-86fa-d075f0b3d738
+md"""
+### Example Unicycle Model
+
+Consider the Reference motion
+```math
+\omega(t)=1,\qquad v(t)=1,\qquad
+p_x(t)=\sin t,\qquad
+p_y(t)=1-\cos t,\qquad
+\theta(t)=t,\quad t\ge 0 .
+```
+Then
+```math
+\dot p_x(t)=\cos t = v\cos\theta,\qquad
+\dot p_y(t)=\sin t = v\sin\theta,\qquad
+\dot\theta(t)=1=\omega,
+```
+so this is indeed a solution of the system.
+
+In the rotated coordinates,
+```math
+\begin{align}
+x_1 &= p_x\cos\theta + (p_y-1)\sin\theta \\
+    &= \sin t\cos t + (-\cos t)\sin t = 0, \\
+x_2 &= -p_x\sin\theta + (p_y-1)\cos\theta \\
+    &= -\sin^2 t - \cos^2 t = -1, \\
+x_3 &=\theta=t.
+\end{align}
+```
+
+Hence the reference trajectory in $x$--coordinates is
+```math
+x_{\mathrm{ref}}(t) = \begin{bmatrix}0\\-1\\t\end{bmatrix},\qquad
+u_{\mathrm{ref}}(t)=\begin{bmatrix}1\\1\end{bmatrix}.
+```
+"""
+
+# ╔═╡ c7b11f27-1582-45d0-adef-32eb9c6de588
+Foldable(md"Linearization along the trajectory",
+md"""
+Let $f(x,u)=\big[v+\omega x_2,\ -\omega x_1,\ \omega\big]^\top$.
+The Jacobians are
+```math
+A(x,u)=\frac{\partial f}{\partial x}=
+\begin{bmatrix}
+0&\omega&0\\
+-\omega&0&0\\
+0&0&0
+\end{bmatrix},\qquad
+B(x,u)=\frac{\partial f}{\partial u}=
+\begin{bmatrix}
+1&x_2\\
+0&-x_1\\
+0&1
+\end{bmatrix}.
+```
+Evaluating on $(x_{\mathrm{ref}}(t),u_{\mathrm{ref}}(t))$ gives the constant matrices
+```math
+A=\begin{bmatrix}
+0&1&0\\
+-1&0&0\\
+0&0&0
+\end{bmatrix},\qquad
+B=\begin{bmatrix}
+1&-1\\
+0&0\\
+0&1
+\end{bmatrix},
+```
+Therefore time-invariant (LTI) linearization!
+""")
 
 # ╔═╡ 4cd2306d-e3f3-4895-8798-596f6c353bdc
 question_box(md"### How do we include the dynamics in control/decision problems?")
@@ -1489,6 +1748,8 @@ question_box(md"### Why most simulators use Backward--Euler?")
 # ╟─58c2e1f2-819d-40fc-8e92-03a1a3019a3d
 # ╟─70690e72-c31e-4c91-b211-35c74d1d9973
 # ╟─5f35a169-887f-477f-b010-167627f7ce4c
+# ╟─5c8f6256-e818-4aa1-aea0-02422df8f77c
+# ╟─a3f47dad-3cfa-4f6d-9dc6-d4b09d209f86
 # ╟─e860d92b-cc8f-479b-a0fc-e5f7a11ae1fd
 # ╟─bb4bfa72-bf69-41f5-b017-7cbf31653bae
 # ╟─2936c97e-a407-4e56-952f-0a2dfb7acf83
@@ -1509,6 +1770,13 @@ question_box(md"### Why most simulators use Backward--Euler?")
 # ╟─41e1934a-2a43-44c3-9bcf-bef56f4d057e
 # ╟─fc585231-a650-4efb-aea4-95110dbf8fa5
 # ╟─da8a1e40-7e7c-472a-933a-c585754270bd
+# ╟─211f75ed-8acb-4261-bf97-8fc70be2a79b
+# ╟─7e7ce801-a510-4ef2-910b-9e10b685ea58
+# ╟─7ad76460-e60c-4579-bee0-ac6f3c511877
+# ╟─e055fdc3-fb83-4c13-85c9-6edcb661e2dd
+# ╟─db1c0c1e-9f3b-44b6-8974-6d5ab5e5e8b7
+# ╟─04b6560f-aee2-41fd-86fa-d075f0b3d738
+# ╟─c7b11f27-1582-45d0-adef-32eb9c6de588
 # ╟─4cd2306d-e3f3-4895-8798-596f6c353bdc
 # ╟─ca9d4d0c-40c2-4144-866f-db1417d42c8f
 # ╟─3a576353-76bb-4c12-b2a2-b37e8e1dd17f
