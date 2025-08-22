@@ -107,7 +107,7 @@ end
 begin
 	if ismissing(∂f╱∂ωₙ)
 		still_missing()
-	elseif ∂f╱∂ωₙ == a[n] && grad_f == ∇f
+	elseif ∂f╱∂ωₙ == _ans && grad_f == ∇f
 		correct()
 	else
 		keep_working()
@@ -121,14 +121,17 @@ Compute the gradient of the function:
 
 ```math
 
-f(w_1, w_2, w_3) = w_1 w_2 + w_2 w_3 + w_3 w_1
+f_2(w_1, w_2, w_3) = w_1 w_2 + w_2 w_3 + w_3 w_1
 
 ```
 
 "
 
 # ╔═╡ 611c28fa-9542-11ea-1751-fbdedcfb7690
-ans2=missing
+begin
+	f2(w) = w[1] * w[2] + w[2] * w[3] + w[3] * w[1]
+	∇f2 = (w) -> missing # replace missing with the function that computes the gradient of `f2`
+end
 
 # ╔═╡ da942073-32d5-4de5-82c0-271a0cb0e903
 md" **Lets check our answer (with Automatic Differentiation - AD):**
@@ -137,13 +140,16 @@ Symbolic Differentiation may not always be possible, making it beneficial to hav
 "
 
 # ╔═╡ 9972495f-79f4-4612-99db-d97c3e9d57b4
-zygote_ans = f'(rand(N))
+begin
+	w2 = rand(3) # Random vector of size 3
+	zygote_ans = f2'(w2)
+end
 
 # ╔═╡ e6948424-ce04-4bed-b9d1-ab6c5a513ffa
 begin
-	if ismissing(ans2)
+	if ismissing(∇f2(w2))
 		still_missing()
-	elseif zygote_ans == ans2
+	elseif zygote_ans == ∇f2(w2)
 		correct()
 	else
 		keep_working()
