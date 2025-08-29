@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.15
+# v0.20.4
 
 using Markdown
 using InteractiveUtils
@@ -229,7 +229,7 @@ Because of fuselage geometry the two design variables must lie
 *inside* a circular envelope in the $(m,c)$-plane:
 
 ```math
-m^{2} + c^{2} \; \le \; 100 .
+(m-6)^{2} + (c-3)^{2} \; \le \; 30 .
 ```
 
 The engineering goal is to minimise the total cost
@@ -256,14 +256,14 @@ replace the quadratic constraint by a sequence of cutting planes
    * Solve for a tentative point $(\bar m,\bar c)$.
 
 2. **Feasibility check**  
-   * If $\bar m^{2}+\bar c^{2} \le 100$ the point is feasible $\Rightarrow$ **done**.  
+   * If $\bar (m-6)^{2} + (\bar c-3)^{2} \le 30$ stop: feasible and optimal!
    * Otherwise generate a *supporting hyperplane* for the circle at $(\bar m,\bar c)$:
 
 ```math
-2\,\bar m\,(m - \bar m) \;+\; 2\,\bar c\,(c - \bar c) \;\le\; 100 \;-\; \bar m^{2} \;-\; \bar c^{2}.
+2\,(\bar m-6)\,(m - \bar m) + 2\,(\bar c-3)\,(c - \bar c) \le 30 - (\bar m-6)^{2} - (\bar c-3)^{2} .
 ```
 
-(Derived from the gradient of $g(m,c)=m^{2}+c^{2}-100$.)
+(Derived from the gradient of $g(m,c)=(m-6)^{2} + (c-3)^{2}-30$.)
 
 3. **Add Cut**
     * Add cut & repeat.
@@ -274,7 +274,7 @@ At any point in the solution process, the current LP solution looks like (for a 
 \min_{m,c} \quad & 200\,m + 80\,c \\
 \text{s.t.}\quad & 0 \le m \le 12, \\
                   & 0 \le c \le 12, \\
-                  & 2\,\bar m_j\,(m - \bar m_j) + 2\,\bar c_j\,(c - \bar c_j) \le 100 - \bar m_j^{2} - \bar c_j^{2}, \quad j=1,\dots,J.
+                  & 2\,\bar (m_j-6)\,(m - \bar m_j) + 2\,(\bar c_j-3)\,(c - \bar c_j) \le 30 - (\bar m_j-6)^{2} - (\bar c_j-3)^{2}, \quad j=1,2,\dots
 \end{aligned}
 ```
 
