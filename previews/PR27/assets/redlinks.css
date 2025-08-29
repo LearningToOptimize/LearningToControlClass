@@ -1,0 +1,4 @@
+mjx-container[jax="SVG"] > svg a {
+    fill: red !important; /* default is blue */
+    stroke: red !important; /* default is blue */
+}
