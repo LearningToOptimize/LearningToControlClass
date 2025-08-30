@@ -436,7 +436,7 @@ begin
  [7  1  3  9  2  4  8  5  6];
  [9  6  1  5  3  7  2  8  4];
  [2  8  7  4  1  9  6  3  5];
- [3  4  5  2  8  6  1  7  9]])
+ [3  4  5  2  8  6  1  7  9]],)
 
 	anss = missing
     try
@@ -447,8 +447,24 @@ begin
         anss = missing
     end
 
-    goods = !ismissing(anss) &&
-           all(isapprox.(anss.x_ss, ground_truth_s.x_ss; atol=1e-3))
+    # Convert 3D binary matrix to 2D solution matrix
+    function convert_3d_to_solution(x_3d)
+        if ismissing(x_3d)
+            return missing
+        end
+        solution = zeros(Int, 9, 9)
+        for i in 1:9, j in 1:9, k in 1:9
+            if x_3d[i, j, k] ≈ 1.0
+                solution[i, j] = k
+            end
+        end
+        return solution
+    end
+
+    solution_matrix = ismissing(anss) ? missing : convert_3d_to_solution(anss.x_ss)
+
+    goods = !ismissing(anss) && !ismissing(solution_matrix) &&
+           all(isapprox.(solution_matrix, ground_truth_s.x_ss; atol=1e-3))
 
     if ismissing(anss)
         still_missing()
