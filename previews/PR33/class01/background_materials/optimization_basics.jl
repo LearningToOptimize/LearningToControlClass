@@ -461,7 +461,7 @@ begin
     goods = !ismissing(anss) && !ismissing(solution_matrix) &&
            all(isapprox.(solution_matrix, ground_truth_s.x_ss; atol=1e-3))
 
-    if ismissing(anss)
+    if ismissing(anss.x_ss)
         still_missing()
     elseif goods
         correct()
@@ -810,7 +810,7 @@ end
 # ╟─bca712e4-3f1c-467e-9209-e535aed5ab0a
 # ╟─3997d993-0a31-435e-86cd-50242746c305
 # ╠═3f56ec63-1fa6-403c-8d2a-1990382b97ae
-# ╟─0e8ed625-df85-4bd2-8b16-b475a72df566
+# ╠═0e8ed625-df85-4bd2-8b16-b475a72df566
 # ╟─fa5785a1-7274-4524-9e54-895d46e83861
 # ╟─5e3444d0-8333-4f51-9146-d3d9625fe2e9
 # ╠═0e190de3-da60-41e9-9da5-5a0c7fefd1d7
