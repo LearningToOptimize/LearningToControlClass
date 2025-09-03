@@ -39,6 +39,8 @@ md"
 |  Lecturer   | : | Rosemberg, Andrew |
 |  Date   | : | 28 of July, 2025 |
 
+Special thanks to **Guancheng Qiu** for helping fix some of the code!
+
 # Background Math (_Welcome to Pluto!_)
 
 This background material will use Pluto!

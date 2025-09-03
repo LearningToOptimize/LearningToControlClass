@@ -37,6 +37,8 @@ md"""
 |  Lecturer   | : | Rosemberg, Andrew |
 |  Date   | : | 28 of July, 2025 |
 
+Special thanks to **Guancheng Qiu** for helping fix some of the code!
+
 """
 
 # ╔═╡ eeceb82e-abfb-4502-bcfb-6c9f76a0879d
