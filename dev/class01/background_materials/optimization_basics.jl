@@ -37,6 +37,8 @@ md"""
 |  Lecturer   | : | Rosemberg, Andrew |
 |  Date   | : | 28 of July, 2025 |
 
+Special thanks to **Guancheng Qiu** for helping fix some of the code!
+
 """
 
 # ╔═╡ eeceb82e-abfb-4502-bcfb-6c9f76a0879d
@@ -436,21 +438,32 @@ begin
  [7  1  3  9  2  4  8  5  6];
  [9  6  1  5  3  7  2  8  4];
  [2  8  7  4  1  9  6  3  5];
- [3  4  5  2  8  6  1  7  9]])
+ [3  4  5  2  8  6  1  7  9]],)
 
-	anss = missing
-    try
-        anss = (
-            x_ss   = haskey(sudoku, :x_s) ? JuMP.value.(sudoku[:x_s]) : missing,
-        )
-    catch
-        anss = missing
+    anss = (;
+        x_ss = haskey(sudoku, :x_s) && JuMP.is_solved_and_feasible(sudoku) ? JuMP.value.(sudoku[:x_s]) : missing
+    )
+
+    # Convert 3D binary matrix to 2D solution matrix
+    function convert_3d_to_solution(x_3d)
+        if ismissing(x_3d)
+            return missing
+        end
+        solution = zeros(Int, 9, 9)
+        for i in 1:9, j in 1:9, k in 1:9
+            if x_3d[i, j, k] ≈ 1.0
+                solution[i, j] = k
+            end
+        end
+        return solution
     end
 
-    goods = !ismissing(anss) &&
-           all(isapprox.(anss.x_ss, ground_truth_s.x_ss; atol=1e-3))
+    solution_matrix = ismissing(anss) ? missing : convert_3d_to_solution(anss.x_ss)
 
-    if ismissing(anss)
+    goods = !ismissing(anss) && !ismissing(solution_matrix) &&
+           all(isapprox.(solution_matrix, ground_truth_s.x_ss; atol=1e-3))
+
+    if ismissing(anss.x_ss)
         still_missing()
     elseif goods
         correct()
@@ -578,8 +591,8 @@ begin
 model_nlp = Model(Ipopt.Optimizer)
 
 # Required named variables
-@variable(model_nlp, x)
-@variable(model_nlp, y)
+@variable(model_nlp, x_nlp)
+@variable(model_nlp, y_nlp)
 
 # --- YOUR CODE HERE ---
 
@@ -707,7 +720,7 @@ begin
     # Decide which badge to show
     if ismissing(ansd)               # nothing yet
         still_missing()
-    elseif x == 25.0
+    elseif ansd == 25.0
         correct()
     else
         keep_working()
@@ -721,8 +734,8 @@ begin
 	ans3=missing
     try
         ans3 = (
-            x   = safeval(model_nlp, :x),
-            y   = safeval(model_nlp, :y),
+            x   = safeval(model_nlp, :x_nlp),
+            y   = safeval(model_nlp, :y_nlp),
             obj = objective_value(model_nlp),
         )
     catch
@@ -799,7 +812,7 @@ end
 # ╟─bca712e4-3f1c-467e-9209-e535aed5ab0a
 # ╟─3997d993-0a31-435e-86cd-50242746c305
 # ╠═3f56ec63-1fa6-403c-8d2a-1990382b97ae
-# ╟─0e8ed625-df85-4bd2-8b16-b475a72df566
+# ╠═0e8ed625-df85-4bd2-8b16-b475a72df566
 # ╟─fa5785a1-7274-4524-9e54-895d46e83861
 # ╟─5e3444d0-8333-4f51-9146-d3d9625fe2e9
 # ╠═0e190de3-da60-41e9-9da5-5a0c7fefd1d7
