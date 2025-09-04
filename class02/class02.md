@@ -14,31 +14,31 @@ This class covers the fundamental numerical optimization techniques essential fo
 
 The class is structured around 1 slide deck and four interactive Jupyter notebooks:
 
-1. **[Part 1a: Root Finding & Backward Euler](part1_root_finding.html)**
+1. **[Part 1a: Root Finding & Backward Euler](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part1_root_finding.html)**
    - Root-finding algorithms for implicit integration
    - Fixed-point iteration vs. Newton's method
    - Application to pendulum dynamics
 
 
-2. **[Part 1b: Minimization via Newton's Method](part1_minimization.html)**
+2. **[Part 1b: Minimization via Newton's Method](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part1_minimization.html)**
    - Unconstrained optimization fundamentals
    - Newton's method implementation
    - Globalization strategies: Hessian matrix and regularization
 
-3. **[Part 2: Equality Constraints](part2_eq_constraints.html)**
+3. **[Part 2: Equality Constraints](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part2_eq_constraints.html)**
    - Lagrange multiplier theory
    - KKT conditions for equality constraints
    - Quadratic programming implementation
 
-4. **[Part 3: Interior-Point Methods](part3_ipm.html)**
+4. **[Part 3: Interior-Point Methods](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part3_ipm.html)**
    - Inequality constraint handling
    - Barrier methods and log-barrier functions
    - Comparison with penalty methods
 
 ## Additional Resources
 
-- **[Lecture Slides (PDF)](ISYE_8803___Lecture_2___Slides.pdf)** - Complete slide deck
-- **[LaTeX Source](main.tex)** - Source code for lecture slides
+- **[Lecture Slides (PDF)](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/ISYE_8803___Lecture_2___Slides.pdf)** - Complete slide deck
+- **[LaTeX Source](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/main.tex)** - Source code for lecture slides
 
 ## Key Learning Outcomes
 

@@ -35,28 +35,28 @@ By the end of this class, students will be able to:
 The class is structured around four interactive Jupyter notebooks that build upon each other:
 
 
-1. **[Part 1a: Root Finding & Backward Euler](part1_root_finding.html)**
+1. **[Part 1a: Root Finding & Backward Euler](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part1_root_finding.html)**
    - Root-finding algorithms for implicit integration
    - Fixed-point iteration vs. Newton's method
    - Backward Euler implementation for ODEs
    - Convergence analysis and comparison
    - Application to pendulum dynamics
 
-2. **[Part 1b: Minimization via Newton's Method](part1_minimization.html)**
+2. **[Part 1b: Minimization via Newton's Method](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part1_minimization.html)**
    - Unconstrained optimization fundamentals
    - Newton's method for minimization
    - Hessian matrix and positive definiteness
    - Regularization and line search techniques
    - Practical implementation with Julia
 
-3. **[Part 2: Equality Constraints](part2_eq_constraints.html)**
+3. **[Part 2: Equality Constraints](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part2_eq_constraints.html)**
    - Lagrange multiplier theory
    - KKT conditions for equality constraints
    - Quadratic programming with equality constraints
    - Visualization of constrained optimization landscapes
    - Practical implementation examples
 
-4. **[Part 3: Interior-Point Methods](part3_ipm.ipynb)**
+4. **[Part 3: Interior-Point Methods](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/part3_ipm.html)**
    - Inequality constraint handling
    - Barrier methods and log-barrier functions
    - Interior-point algorithm implementation
@@ -65,9 +65,9 @@ The class is structured around four interactive Jupyter notebooks that build upo
 
 ### Additional Resources
 
-- **[Lecture Slides (PDF)](ISYE_8803___Lecture_2___Slides.pdf)** - Complete slide deck from the presentation
-- **[LaTeX Source Files](main.tex)** - Source code for the lecture slides
-- **[Demo Script](penalty_barrier_demo.py)** - Python demonstration of penalty vs. barrier methods
+- **[Lecture Slides (PDF)](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/ISYE_8803___Lecture_2___Slides.pdf)** - Complete slide deck from the presentation
+- **[LaTeX Source Files](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/main.tex)** - Source code for the lecture slides
+- **[Demo Script](https://learningtooptimize.github.io/LearningToControlClass/dev/class02/penalty_barrier_demo.py)** - Python demonstration of penalty vs. barrier methods
 
 ## Key Concepts Covered
 
