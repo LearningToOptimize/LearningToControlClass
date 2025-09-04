@@ -1,4 +1,4 @@
-struct L2CCGitHubActionsAllowExternalPreviews <: Documenter.GithubActions
+struct L2CCGitHubActionsAllowExternalPreviews <: Documenter.GitHubActions
     github_repository::String
     github_event_name::String
     github_ref::String
