@@ -14609,6 +14609,18 @@ body[data-format='mobile'] .jp-OutputArea-child .jp-OutputArea-output {
 </div>
 <div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
+<h1 id="The-content-of-this-notebook-comes-from-the-CMU-course-%22Optimal-Control-16-745%22-from-Zachary-Manchester:">The content of this notebook comes from the CMU course "Optimal-Control-16-745" from Zachary Manchester:<a class="anchor-link" href="#The-content-of-this-notebook-comes-from-the-CMU-course-%22Optimal-Control-16-745%22-from-Zachary-Manchester:">&#182;</a></h1><p><a href="https://github.com/Optimal-Control-16-745/lecture-notebooks/blob/main/Lecture%203/minimization.ipynb">https://github.com/Optimal-Control-16-745/lecture-notebooks/blob/main/Lecture%203/minimization.ipynb</a></p>
+
+</div>
+</div>
+</div>
+</div>
+<div class="jp-Cell jp-MarkdownCell jp-Notebook-cell">
+<div class="jp-Cell-inputWrapper">
+<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
+</div>
+<div class="jp-InputArea jp-Cell-inputArea"><div class="jp-InputPrompt jp-InputArea-prompt">
+</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <h1 id="Lecture-3-%E2%80%94-Minimization-via-Newton's-Method">Lecture 3 &#8212; Minimization via Newton's Method<a class="anchor-link" href="#Lecture-3-%E2%80%94-Minimization-via-Newton's-Method">&#182;</a></h1><h2 id="Key-ideas:">Key ideas:<a class="anchor-link" href="#Key-ideas:">&#182;</a></h2><h3 id="%E2%80%A2-%E2%88%82f/%E2%88%82x-is-a-row-vector;-we-use-%E2%88%87f(x)-=-(%E2%88%82f/%E2%88%82x)%5ET-(column)">&#8226; &#8706;f/&#8706;x is a row vector; we use &#8711;f(x) = (&#8706;f/&#8706;x)^T (column)<a class="anchor-link" href="#%E2%80%A2-%E2%88%82f/%E2%88%82x-is-a-row-vector;-we-use-%E2%88%87f(x)-=-(%E2%88%82f/%E2%88%82x)%5ET-(column)">&#182;</a></h3><h3 id="%E2%80%A2-Newton-for-minimization-solves:-H(x)-%CE%94x-=--%E2%88%87f(x)">&#8226; Newton for minimization solves: H(x) &#916;x = -&#8711;f(x)<a class="anchor-link" href="#%E2%80%A2-Newton-for-minimization-solves:-H(x)-%CE%94x-=--%E2%88%87f(x)">&#182;</a></h3><h3 id="%E2%80%A2-Update:-x-%E2%86%90-x-+-%CE%94x,-where-H-=-%E2%88%87%C2%B2f-is-the-Hessian">&#8226; Update: x &#8592; x + &#916;x, where H = &#8711;&#178;f is the Hessian<a class="anchor-link" href="#%E2%80%A2-Update:-x-%E2%86%90-x-+-%CE%94x,-where-H-=-%E2%88%87%C2%B2f-is-the-Hessian">&#182;</a></h3><h3 id="%E2%80%A2-If-H-%E2%89%BB-0-(positive-definite),-the-Newton-step-is-a-descent-direction">&#8226; If H &#8827; 0 (positive definite), the Newton step is a descent direction<a class="anchor-link" href="#%E2%80%A2-If-H-%E2%89%BB-0-(positive-definite),-the-Newton-step-is-a-descent-direction">&#182;</a></h3><h3 id="%E2%80%A2-Regularization-(%22damped-Newton%22):-add-%CE%B2I-until-H-%E2%89%BD-0-to-guarantee-descent">&#8226; Regularization ("damped Newton"): add &#946;I until H &#8829; 0 to guarantee descent<a class="anchor-link" href="#%E2%80%A2-Regularization-(%22damped-Newton%22):-add-%CE%B2I-until-H-%E2%89%BD-0-to-guarantee-descent">&#182;</a></h3><h3 id="%E2%80%A2-Line-Search:-avoid-overshooting-a-minima">&#8226; Line Search: avoid overshooting a minima<a class="anchor-link" href="#%E2%80%A2-Line-Search:-avoid-overshooting-a-minima">&#182;</a></h3>
 </div>
 </div>
@@ -14863,7 +14875,7 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>1-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x13db84130&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x16801bfa0&gt;</pre>
 </div>
 
 </div>
@@ -14972,7 +14984,7 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>1-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x13fc807c0&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1685ec460&gt;</pre>
 </div>
 
 </div>
@@ -15030,8 +15042,8 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>2-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x13fcfd480&gt;
- PyObject &lt;matplotlib.lines.Line2D object at 0x13fcfd570&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1685ec730&gt;
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1685ec820&gt;</pre>
 </div>
 
 </div>
@@ -15099,7 +15111,7 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>1-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b846c80&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1693ba920&gt;</pre>
 </div>
 
 </div>
@@ -15157,8 +15169,8 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>2-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b8dc7f0&gt;
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b8dc8e0&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1694506d0&gt;
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1694507c0&gt;</pre>
 </div>
 
 </div>
@@ -15322,7 +15334,7 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>1-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b952140&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x170479de0&gt;</pre>
 </div>
 
 </div>
@@ -15380,8 +15392,8 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>2-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b9cd450&gt;
- PyObject &lt;matplotlib.lines.Line2D object at 0x14b9cd540&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1704eba00&gt;
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1704ebaf0&gt;</pre>
 </div>
 
 </div>
@@ -15515,7 +15527,7 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>1-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14ba3ac50&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x17058d6c0&gt;</pre>
 </div>
 
 </div>
@@ -15582,30 +15594,14 @@ class="
 
 <div class="jp-RenderedText jp-OutputArea-output jp-OutputArea-executeResult" data-mime-type="text/plain">
 <pre>2-element Vector{PyCall.PyObject}:
- PyObject &lt;matplotlib.lines.Line2D object at 0x14ba774f0&gt;
- PyObject &lt;matplotlib.lines.Line2D object at 0x14ba74880&gt;</pre>
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1705df850&gt;
+ PyObject &lt;matplotlib.lines.Line2D object at 0x1705df940&gt;</pre>
 </div>
 
 </div>
 
 </div>
 
-</div>
-
-</div><div class="jp-Cell jp-CodeCell jp-Notebook-cell jp-mod-noOutputs  ">
-<div class="jp-Cell-inputWrapper">
-<div class="jp-Collapser jp-InputCollapser jp-Cell-inputCollapser">
-</div>
-<div class="jp-InputArea jp-Cell-inputArea">
-<div class="jp-InputPrompt jp-InputArea-prompt">In&nbsp;[&nbsp;]:</div>
-<div class="jp-CodeMirrorEditor jp-Editor jp-InputArea-editor" data-type="inline">
-     <div class="CodeMirror cm-s-jupyter">
-<div class=" highlight hl-julia"><pre><span></span>
-</pre></div>
-
-     </div>
-</div>
-</div>
 </div>
 
 </div>
