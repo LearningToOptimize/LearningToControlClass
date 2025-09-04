@@ -56,7 +56,9 @@ end
 # Documenter can also automatically deploy documentation to gh-pages.
 # See "Hosting Documentation" and deploydocs() in the Documenter manual
 # for more information.
+include("patch.jl")
 deploydocs(
     repo="github.com/LearningToOptimize/LearningToControlClass.git",
     push_preview=true,
+    deploy_config=L2CCGitHubActionsAllowExternalPreviews()
 )
