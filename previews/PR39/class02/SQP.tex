@@ -1,0 +1,123 @@
+\section{Sequential Quadratic Programming (SQP)}
+
+% ------------------------------------------------
+\begin{frame}{What is SQP?}
+\textbf{Idea:} Solve a nonlinear, constrained problem by repeatedly solving a \emph{quadratic program (QP)} built from local models.\\[4pt]
+\begin{itemize}
+  \item Linearize constraints; quadratic model of the Lagrangian/objective.
+  \item Each iteration: solve a QP to get a step \(d\), update \(x \leftarrow x + \alpha d\).
+  \item Strength: strong local convergence (often superlinear) with good Hessian info.
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Target Problem (NLP)}
+\[
+\min_{x \in \R^n} \ f(x)
+\quad
+\text{s.t.}\quad
+g(x)=0,\quad h(x)\le 0
+\]
+\begin{itemize}
+  \item \(f:\R^n\!\to\!\R\), \(g:\R^n\!\to\!\R^{m}\) (equalities), \(h:\R^n\!\to\!\R^{p}\) (inequalities).
+  \item KKT recap (at candidate optimum \(x^\star\)): 
+\[
+\exists \ \lambda \in \R^{m},\ \mu \in \R^{p}_{\ge 0}:
+\ \grad f(x^\star) + \nabla g(x^\star)^T\lambda + \nabla h(x^\star)^T \mu = 0,
+\]
+\[
+g(x^\star)=0,\quad h(x^\star)\le 0,\quad \mu \ge 0,\quad \mu \odot h(x^\star) = 0.
+\]
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{From NLP to a QP (Local Model)}
+At iterate \(x_k\) with multipliers \((\lambda_k,\mu_k)\):\\[4pt]
+\textbf{Quadratic model of the Lagrangian}
+\[
+m_k(d) = \ip{\grad f(x_k)}{d} + \tfrac{1}{2} d^T B_k d
+\]
+with \(B_k \approx \nabla^2_{xx}\Lag(x_k,\lambda_k,\mu_k)\).\\[6pt]
+\textbf{Linearized constraints}
+\[
+g(x_k) + \nabla g(x_k)\, d = 0,\qquad
+h(x_k) + \nabla h(x_k)\, d \le 0.
+\]
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{The SQP Subproblem (QP)}
+\[
+\begin{aligned}
+\min_{d \in \R^n}\quad & \grad f(x_k)^T d + \tfrac{1}{2} d^T B_k d \\
+\text{s.t.}\quad & \nabla g(x_k)\, d + g(x_k) = 0, \\
+& \nabla h(x_k)\, d + h(x_k) \le 0.
+\end{aligned}
+\]
+\begin{itemize}
+  \item Solve QP \(\Rightarrow\) step \(d_k\) and updated multipliers \((\lambda_{k+1},\mu_{k+1})\).
+  \item Update \(x_{k+1} = x_k + \alpha_k d_k\) (line search or trust-region).
+\end{itemize}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Algorithm Sketch (SQP)}
+\begin{enumerate}
+  \item Start with \(x_0\), multipliers \((\lambda_0,\mu_0)\), and \(B_0 \succ 0\).
+  \item Build QP at \(x_k\) with \(B_k\), linearized constraints.
+  \item Solve QP \(\Rightarrow\) get \(d_k\), \((\lambda_{k+1},\mu_{k+1})\).
+  \item Globalize: line search on merit or use filter/TR to choose \(\alpha_k\).
+  \item Update \(x_{k+1} = x_k + \alpha_k d_k\), update \(B_{k+1}\) (e.g., BFGS).
+\end{enumerate}
+\end{frame}
+
+% ------------------------------------------------
+\begin{frame}{Toy Example (Local Models)}
+\textbf{Problem:}
+\[
+\min_{x\in\R^2} \ \tfrac{1}{2}\norm{x}^2
+\quad \text{s.t.} \quad g(x)=x_1^2 + x_2 - 1 = 0,\ \ h(x)=x_2 - 0.2 \le 0.
+\]
+At \(x_k\), build QP with
+\[
+\grad f(x_k)=x_k,\quad B_k=I,\quad
+\nabla g(x_k) = \begin{bmatrix} 2x_{k,1} & 1 \end{bmatrix},\ 
+\nabla h(x_k) = \begin{bmatrix} 0 & 1 \end{bmatrix}.
+\]
+Solve for \(d_k\), then \(x_{k+1}=x_k+\alpha_k d_k\).
+\end{frame}
+ 
+
+% ------------------------------------------------
+\begin{frame}{Globalization: Making SQP Robust}
+SQP is an important method, and there are many issues to be considered to obtain an \textbf{efficient} and \textbf{reliable} implementation:
+\begin{itemize}
+  \item Efficient solution of the linear systems at each Newton Iteration (Matrix block structure can be exploited.
+  \item Quasi-Newton approximations to the Hessian.
+  \item Trust region, line search, etc. to improve robustnes (i.e TR: restrict \(\norm{d}\) to maintain model validity.)
+  \item Treatment of constraints (equality and inequality) during the iterative process.
+  \item Selection of good starting guess for $\lambda$.
+\end{itemize}
+\end{frame}
+
+ 
+   
+ 
+ 
+
+% ------------------------------------------------
+\begin{frame}{Final Takeaways on SQP}
+\textbf{When SQP vs.\ Interior-Point?}
+\begin{itemize}
+  \item \textbf{SQP}: strong local convergence; warm-start friendly; natural for NMPC.
+  \item \textbf{IPM}: very robust for large, strictly feasible problems; good for dense inequality sets.
+  \item In practice: both are valuable—choose to match problem structure and runtime needs.
+\end{itemize} 
+\textbf{Takeaways of SQP} 
+\begin{itemize}
+  \item SQP = Newton-like method using a sequence of structured QPs.
+  \item Globalization (merit/filter/TR) makes it reliable from poor starts.
+  \item Excellent fit for control (NMPC/trajectory optimization) due to sparsity and warm starts.
+\end{itemize}
+\end{frame}
