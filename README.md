@@ -74,7 +74,7 @@ Students must provide materials equivalent to those used in an in-person session
 | 19 | Lecture - TBD | Contact Explict and Contact Implicit; Trajectory Optimization for Hybrid and Composed Systems;  | |
 | 20 | Lecture - TBD | Probabilistic Programming; Bayesian numerical methods; Variational Inference; probabilistic solvers for ODEs/PDEs; Bayesian optimization in control;  | |
 | 21 | Lecture - TBD | Distributed optimal control & multi-agent coordination; Consensus, distributed MPC, and optimization over graphs (ADMM). | |
-| 22 | Lecture - TBD | Dynamic Optimal Control of Power Systems; Generators swing equations, Transmission lines electromagnetic transients, dynamic load models, and inverters. | |
+| 22 | Lecture - Shuaicheng (Allen) Tong | Dynamic Optimal Control of Power Systems; Generators swing equations, Transmission lines electromagnetic transients, dynamic load models, and inverters. | |
 
 ## Reference Material
 
