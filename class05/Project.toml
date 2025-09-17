@@ -1,0 +1,6 @@
+[deps]
+MarkdownLiteral = "736d6165-7244-6769-4267-6b50796e6954"
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+PlutoTeachingTools = "661c6b06-c737-4d37-b85c-46df65de6f69"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
