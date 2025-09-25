@@ -80,7 +80,7 @@ md"# Intro - Optimal Control and Learning
 In this course, we are interested in problems with the following structure:
 
 ```math
-\begin{equation}
+\begin{align}
 \!\!\!\!\!\!\!\!\min_{\substack{(\mathbf u_1,\mathbf x_1)\\\mathrm{s.t.}}}
 \!\underset{%
    \phantom{\substack{(\mathbf u_1,\mathbf x_1)\\\mathrm{s.t.}}}%
@@ -100,13 +100,13 @@ In this course, we are interested in problems with the following structure:
        \!\!\!\!\!\!\!\!\!\!c(\mathbf x_t,\mathbf u_t)%
     }
     +\mathbb{E}_{t+1}[\cdots]
-\Bigr].
-\end{equation}
+\Bigr]. \quad (1)
+\end{align}
 ```
 which minimizes a first stage cost function $c(\mathbf{x}_1,
 \mathbf{u}_1)$ and the expected value of future costs over possible
 values of the exogenous stochastic variable $\{w_{t}\}_{t=2}^{T} \in
-\Omega$. 
+\Omega$. This problem is sometimes referred to as a multistage stochastic problem (MSP).
 
 Here, $\mathbf{x}_0$ is the initial system state and the
 control decisions $\mathbf{u}_t$ are obtained at every period $t$
@@ -136,19 +136,19 @@ transformation based on the incoming state, the realized uncertainty,
 and the control variables. In the Markov Decision Process (MDP) framework, we refer to $f$ as the "transition kernel" of the system. State and
 control variables are restricted further by additional constraints
 captured by $h(\mathbf{x}_t, \mathbf{u}_t) \geq 0$.  We
-consider policies that map the past information into decisions: $\pi_t : (\mathbf{x}_{t-1}, w_t) \rightarrow \mathbf{x}_t$. In
+consider policies that map the past information into decisions: $\pi_t : (\mathbf{x}_{t-1}, w_t) \rightarrow \mathbf{x}_t$ -- or equivalently $\pi_t : (\mathbf{x}_{t-1}, w_t) \rightarrow \mathbf{u}_t$ . In
 period $t$, an optimal policy is given by the solution of the dynamic
 equations:
 
 ```math
 \begin{align}
-    V_{t}(\mathbf{x}_{t-1}, w_t) = &\min_{\mathbf{x}_t, \mathbf{u}_t} \quad  \! \! c(\mathbf{x}_t, \mathbf{u}_t) + \mathbf{E}_{t+1}[V_{t+1}(\mathbf{x}_t, w_{t+1})]    \\
+    V_{t}(\mathbf{x}_{t-1}, w_t) = &\min_{\mathbf{x}_t, \mathbf{u}_t} \quad  \! \! c(\mathbf{x}_t, \mathbf{u}_t) + \mathbf{E}_{t+1}[V_{t+1}(\mathbf{x}_t, w_{t+1})]   \quad (2)   \\
     &   \text{ s.t. } \quad\mathbf{x}_t  = f(\mathbf{x}_{t-1}, w_t, \mathbf{u}_t) \nonumber         \\
-    &  \quad \quad \quad \! \! h(\mathbf{x}_t, \mathbf{u}_t)  \geq 0. \nonumber             
+    &  \quad \quad \quad \! \! h(\mathbf{x}_t, \mathbf{u}_t)  \geq 0.           
 \end{align}
 ```
 ```math
-\implies \pi_t^{*}(\mathbf{x}_{t-1}, w_t) \in \{\mathbf{x}_t \;|\; \exists u_t \;:\; c(\mathbf{x}_t, \mathbf{u}_t) + \mathbf{E}_{t+1}[V_{t+1}(\mathbf{x}_t, w_{t+1})] = V_{t}(\mathbf{x}_{t-1}, w_t) \}
+\implies \pi_t^{*}(\mathbf{x}_{t-1}, w_t) \in \arg \min \; (2)
 ```
 
 """
@@ -356,8 +356,18 @@ Foldable(md"#### LearningToOptimize Project", @htl """
 """)
   ╠═╡ =#
 
+# ╔═╡ a876defb-3a1b-4878-8af4-615bb5425794
+md"""
+While many interesting problems can be modeled using the above-mentioned template, we are particularly interested here in problems where the "transition kernel" $f$  is derived from an Ordinary Differential Equation (ODE). Specifically, we focus on systems where the transient dynamics must be taken into account.
+"""
+
 # ╔═╡ c08f511e-b91d-4d17-a286-96469c31568a
-md"## Example: Robotic Arm Manipulation"
+md"## Example: Robotic Arm Manipulation
+
+A compelling example of a control problem that satisfies our criteria is *robotic arm manipulation*. In this setting, the objective is to determine the minimum-torque trajectory that drives the system toward a desired target state.
+
+The figure below illustrates the variables and constants associated with this problem.
+"
 
 # ╔═╡ b3129bcb-c24a-4faa-a5cf-f69ce518ea87
 begin
@@ -384,27 +394,24 @@ y = L_{1}\,\cos\theta_{1} \;+\; L_{2}\,\cos\!\bigl(\theta_{1}+\theta_{2}\bigr).
 begin
 md"""
 
-**State**  
+**State**
+
+In this problem, The state vector \mathbf{x}_t collects the joint angles and angular velocities, fully describing the system’s configuration and motion at time t.
+	
 ```math
   \mathbf{x}_t=\begin{bmatrix}\theta_{1,t}&\theta_{2,t}&\dot\theta_{1,t}&\dot\theta_{2,t}\end{bmatrix}^{\!\top}
 ```
 
-**Control**  
+**Control**
+The control vector \mathbf{u}_t represents the joint torques applied at time t, which directly influence the evolution of the system’s dynamics.
+
 ```math
   \mathbf{u}_t=\boldsymbol\tau_t=\begin{bmatrix}\tau_{1,t}&\tau_{2,t}\end{bmatrix}^{\!\top}
 ```
 
-**Dynamics** (Euler sample time Δt)  
-```math
-  \mathbf{x}_{t+1}=f_d(\mathbf{x}_t,\mathbf{u}_t)
-  \;\;\equiv\;
-  \begin{bmatrix}
-  \boldsymbol\theta_t+\Delta t\,\dot{\boldsymbol\theta}_t\\[2pt]
-  \dot{\boldsymbol\theta}_t+\Delta t\,\mathcal{M}^{-1}(\boldsymbol\theta_t)(B(\boldsymbol\theta_t)\boldsymbol\tau_t + F(w_t) - C(\boldsymbol\theta_t,\boldsymbol{\dot\theta})\bigr)
-  \end{bmatrix}
-```
+**Stage cost**
 
-**Stage cost** 
+The stage cost penalizes both deviation of the arm’s position from the target (tracking error) and the magnitude of the applied torques, balancing accuracy with energy efficiency.
 
 ```math
 c(\mathbf{x}_t,\mathbf{u}_t)=
@@ -413,10 +420,13 @@ c(\mathbf{x}_t,\mathbf{u}_t)=
 \qquad \lambda_\tau>0 .
 ```
 
-Terminal cost  
+The terminal cost enforces accurate target tracking at the final time horizon by penalizing the squared distance between the terminal state and the desired target position:
+	
 $V_T(\mathbf{x}_T)=\|p(\boldsymbol\theta_T)-p_{\text{target}}\|_2^{2}$.
 
 **Constraints**
+
+The constraints enforce physical and safety limits, including bounds on joint angles, joint velocities, and actuator torque capacities, ensuring feasible and realistic trajectories.
 
 ```math
 h(\mathbf{x}_t,\mathbf{u}_t)\ge 0\;:\;
@@ -427,8 +437,31 @@ h(\mathbf{x}_t,\mathbf{u}_t)\ge 0\;:\;
 \end{cases}
 ```
 
+**Dynamics** (Euler sample time Δt)
+
+The system dynamics define how the state evolves over time, using the Euler method with sampling interval \Delta t, and are governed by the underlying ODEs derived from rigid-body mechanics.
+	
+```math
+  \mathbf{x}_{t+1}=f_d(\mathbf{x}_t,\mathbf{u}_t)
+  \;\;\equiv\;
+  \begin{bmatrix}
+  \boldsymbol\theta_t+\Delta t\,\dot{\boldsymbol\theta}_t\\[2pt]
+  \dot{\boldsymbol\theta}_t+\Delta t\,\mathcal{M}^{-1}(\boldsymbol\theta_t)(B(\boldsymbol\theta_t)\boldsymbol\tau_t + F(w_t) - C(\boldsymbol\theta_t,\boldsymbol{\dot\theta})\bigr)
+  \end{bmatrix}
+```
+
+
 """
 end
+
+# ╔═╡ f37c72a5-16bc-4969-9a5d-41bf3294c7dc
+md"
+-----
+
+To derive the dynamics of such problems, we must first understand their origin, the assumptions involved, and the various choices available to the modeler when transcribing the dynamics into a control problem.
+
+In the remainder of this lecture, we will provide a brief overview of continuous-time dynamics, discuss how to simulate these systems, and introduce useful concepts that will serve as a foundation for the rest of the course.
+"
 
 # ╔═╡ 52005382-177b-4a11-a914-49a5ffc412a3
 section_outline(md"A Crash Course:",md" (Continuous-Time) Dynamics
@@ -454,7 +487,7 @@ u \in \mathbb{R}^{m} & \text{Control} \\
 "
 
 # ╔═╡ 2be161cd-2d4c-4778-adca-d45f8ab05f98
-Foldable(md"What would $F=ma$ be?", md"""
+Foldable(md"Does $F=ma$ fit this formula?", md"""
 
 A $2^{\text{nd}}$--Order ODE! But we can always write them as $1^{\text{st}}$--Order.
 For a mechanical system:
@@ -488,7 +521,10 @@ md"State $x$ is everything you need to define to determine the how your system w
 "
 
 # ╔═╡ 9f62fae9-283c-44c3-8d69-29bfa90faf29
-md"### Example: Pendulum"
+md"""### Example: Pendulum
+
+A classical example often used when introducing continuous dynamics is the simple pendulum. As illustrated in the animation below, the pendulum consists of a point mass $m$ attached to the end of a rigid, massless rod of length $\ell$.
+"""
 
 # ╔═╡ baa3993c-96b0-474e-b5b4-f9eaea642a49
 function pendulum(θ_deg = 60; L = 4, fsize = (520, 450), _xlims=nothing, _ylims=(-5, 5))
@@ -595,14 +631,14 @@ x \in S^{1} \times \mathbb{R} & \text{Cylinder}
 # ╔═╡ 4d598933-05a9-44fa-b5a7-f7e1c7afb094
 md"## Control--Affine Systems
 
-Non--linear Systems of the form:
+A nonlinear system of the following form is called a control–affine system:
 ```math
 \dot{x} = \underbrace{f_{o}(x)}_{\text{drift}} +  \underbrace{B(x)}_{\text{input Jacobian}}u
 ```
 
- $\implies$ Non--linear in the state but affine in the input/control.
+Such systems are nonlinear in the state but affine in the control input.
 
-Control--Affine Systems are common in many mechanical systems.
+As we will see, control–affine structures arise frequently in mechanical systems, making them an essential class to study in control theory.
 
 "
 
@@ -638,12 +674,20 @@ See **Feedback linearization** approaches.
 # ╔═╡ f10927fe-d392-4374-bad1-ab5ac85b8116
 md"## Manipulator Dynamics
 
+We now turn to the dynamics of robotic manipulators. These systems are typically described by equations of motion that couple joint positions, velocities, and accelerations with control inputs and external forces.
+
 ```math
 \begin{cases}
-M(q) \dot{v} +  C(q,v) + B(q)u + F \\
+M(q) \dot{v} +  C(q,v) = B(q)u + F \\
 \dot{q} = G(q)v & \text{(Velocity Kinematics)}
 \end{cases} \qquad \qquad \qquad \qquad \qquad \qquad \qquad 
 ```
+
+The first equation represents the manipulator’s dynamics, where the generalized accelerations $\dot{v}$ are determined by the mass matrix, bias terms, inputs, and external forces.
+The second equation specifies the velocity kinematics, which relate the generalized velocities v to the rate of change of configuration $\dot{q}$.
+
+By combining these two expressions, we can write the system compactly in state–space form:
+
 ```math
 \qquad \implies
 \qquad \dot{x} = f(x,u) =\begin{bmatrix}
@@ -651,7 +695,9 @@ G(q)v \\
 M(q)^{-1}(B(q)u + F - C(q,v))
 \end{bmatrix}
 ```
-where
+Here, the state $x$ typically includes both configuration $q$ and velocity $v$, while the control $u$ enters linearly through the input Jacobian.
+
+Finally, the individual components of the dynamics can be summarized as follows:
 ```math
 \begin{cases}
 M(q) & \text{Mass Matrix / Generalized Inertia Tensor} \\
@@ -663,7 +709,7 @@ F & \text{External Forces}
 "
 
 # ╔═╡ b8b206ef-cdc5-4cc9-9b55-70d711ba2a9e
-Foldable(md"Pendulum?", md"""
+Foldable(md"Does the *Pendulum* fit this form?", md"""
 
 ```math
 M(q) = ml^2, \; C(q,v) = mgl\sin(\theta), \; B=I, \; G=I 
@@ -808,6 +854,8 @@ warning_box(md"But in general we need a *ReFeynman* of the these equations!")
 # ╔═╡ 5f35a169-887f-477f-b010-167627f7ce4c
 md"## (State–Space) Linear Systems
 
+A particularly important special case of the systems we study is that of linear state–space systems.
+
 A system is **Continuous Linear** (CLTV / CLTI) if it can be written as:
 
 ```math
@@ -823,7 +871,7 @@ but we will neglect it for now.
 "
 
 # ╔═╡ 5c8f6256-e818-4aa1-aea0-02422df8f77c
-Foldable(md" When do we have a Time--Invariant (TI) vs Time--Variant (TV)?", md"""
+Foldable(md" When do we have a Time--Invariant (TI) system vs Time--Variant (TV) system?", md"""
 
 When (A,B) are constant we have an LTI system; otherwise it is LTV.
 
@@ -831,7 +879,7 @@ When (A,B) are constant we have an LTI system; otherwise it is LTV.
 
 # ╔═╡ a3f47dad-3cfa-4f6d-9dc6-d4b09d209f86
 md"
-**Non--Linear Systems are often approximated by Linear Systems (locally).**
+**Non--Linear Systems are often approximated by Linear Systems (locally).** How?
 "
 
 # ╔═╡ e860d92b-cc8f-479b-a0fc-e5f7a11ae1fd
@@ -840,10 +888,10 @@ Foldable(md" $\dot{x} = f(x,u) \; \implies \; A=? \; B=?$", md"""
 Suppose now that we apply our dynamics equation to an input:
 
 ```math
-u(t) = u_{eq} + \delta u(t), \quad t \ge 0
+u(t) = u_e + \delta u(t), \quad t \ge 0
 ```
-where $u_{eq}$ is an fixed input and $\delta u(t)$ is a perturbation function such that the input is close 
-but not equal to $u_{eq}$ and similarly we perturb the initial condition:
+where $u_e$ is an fixed input and $\delta u(t)$ is a perturbation function such that the input is close 
+but not equal to $u_e$ and similarly we perturb the initial condition:
 
 ```math
 x(0) = x_e + \delta x(0)
@@ -857,10 +905,10 @@ We will define the deviation from the reference state as:
 To determine the evolution of $\delta x(t)$, we can expand the dynamics around the reference point using a Taylor expansion:
 
 ```math
-\dot{\delta x}(t) = f(x_e + \delta x(t), u_{eq} + \delta u(t))
+\dot{\delta x}(t) = f(x_e + \delta x(t), u_e + \delta u(t))
 ```
 ```math
-=\frac{\partial f}{\partial x}\bigg|_{(x_e, u_{eq})} \delta x(t) + \frac{\partial f}{\partial u}\bigg|_{(x_e, u_{eq})} \delta u(t) + \mathcal{O}(\|\delta x\|^2) + \mathcal{O}(\|\delta u\|^2)
+=\frac{\partial f}{\partial x}\bigg|_{(x_e, u_e)} \delta x(t) + \frac{\partial f}{\partial u}\bigg|_{(x_e, u_e)} \delta u(t) + \mathcal{O}(\|\delta x\|^2) + \mathcal{O}(\|\delta u\|^2)
 ```
 
 Considering just the first-order terms we obtain:
@@ -882,7 +930,7 @@ The problem becomes convex!!
 """)
 
 # ╔═╡ 2936c97e-a407-4e56-952f-0a2dfb7acf83
-md"""## Equilibria
+md"""## Useful Concept: Equilibria
 
 A **Equilibrium** point $(x_{\mathrm{eq}},u_{\mathrm{eq}})$ is one at which the system is and will remain at "rest":
 
@@ -969,11 +1017,21 @@ f(x^{*},u) = 0
 md"""
 ## Stability of Equilibria
 
-When will the system stay "near" an equilibrium point under pertubations?
+**When will the system stay "near" an equilibrium point under pertubations?**
+
+This is an important question because stability determines whether small disturbances, modeling errors, or external inputs will cause the system to return to its equilibrium configuration (often a safe state) or diverge away from it, potentially reaching states that could damage the system or be very costly.
+
+In control theory, the analysis of stability provides fundamental insight into the long–term behavior of dynamical systems and guides the design of controllers that can ensure reliable performance.  
 """
 
 # ╔═╡ 0e29ab58-e56c-4f54-aa2a-3152034ddc0c
-md"### 1--D System"
+md"### 1--D System
+
+To build intuition for the concept of stability, let us examine the phase space of a one–dimensional system. In this setting, the roots of the dynamics correspond to the equilibrium points. The key question is: which equilibria are stable under the definition introduced above, and which are not?
+
+You can use the buttons above the figure to explore the direction of motion near each equilibrium point and observe how trajectories behave in their vicinity.
+
+"
 
 # ╔═╡ d0d251ec-4ea9-417a-90c2-3f19f4b75aa8
 md"""
@@ -1087,7 +1145,8 @@ As we increase the dimensions, it gets increasingly more complicated to reason a
 # ╔═╡ f08c95ef-f784-4c88-be61-91e0549d421b
 md"### $\mathbb{R}^n Space$
 
-Sensitivity is now defined by a Jacobian Matrix:
+In higher-dimensional systems, sensitivity is captured by the **Jacobian matrix**.  
+The Jacobian generalizes the notion of a derivative to vector-valued functions, describing how small perturbations in the state influence the system’s dynamics in each coordinate direction.  
 
 ```math
 J = \begin{bmatrix}
@@ -1173,9 +1232,9 @@ p_x\cos\theta + (p_y-1)\sin\theta \\[4pt]
 This transformation can be viewed as a rotation of the position vector about $\theta$.
 """,@htl """
 
-<img src="https://media.licdn.com/dms/image/v2/D4E22AQEL2gwfuHbjyg/feedshare-shrink_2048_1536/B4EZbV9cNyHMAo-/0/1747346377441?e=1758758400&v=beta&t=KsIL2efm-3OBWsn8rRMRdqVBDIk65og6WGYxMo7pwZc">
+<img src="https://raw.githubusercontent.com/wheelbot/Mini-Wheelbot/refs/heads/main/imgs/circle.gif">
 
-<img src="https://media.licdn.com/dms/image/v2/D4E22AQHjrdv5VJpqYw/feedshare-shrink_1280/B4EZbV9cOjGkAo-/0/1747346378871?e=1758758400&v=beta&t=i1gPZeObZyh-tJurAUPvYcpW-El8fx8oIMoG51G9oxw">
+<img src="https://www.dsme.rwth-aachen.de/global/show_picture.asp?id=aaaaaaaadanbbio&w=1200&q=75">
 
 """)
 
@@ -1346,35 +1405,86 @@ Therefore time-invariant (LTI) linearization!
 # ╔═╡ 4cd2306d-e3f3-4895-8798-596f6c353bdc
 question_box(md"### How do we include the dynamics in control/decision problems?")
 
-# ╔═╡ ca9d4d0c-40c2-4144-866f-db1417d42c8f
+# ╔═╡ 0047390a-86be-4de0-8671-6c7e4db01669
 md"""
-## Discrete--Time Dynamics
 
-We mostly plan in descrete--time, so we need $x(t)$ for the horizon of our planning!
+Our control problem is fundamentally a planning problem. This means that we must determine the values that the system state $x(t)$ will take over the prediction horizon of interest. Since physics typically provides us only with measurements of the derivatives of the states, we need to integrate these equations to recover $x(t)$ -- either explicitly as in a closed analytical form or implicitly inside the optimziation problem.
+"""
+
+# ╔═╡ c15fba37-53c2-408d-bb3d-c1b7b82b1f6f
+md"""
+However, in practice, analytical solutions for $x(t)$ are rarely available, especially for general PDEs. 
+
+The situation becomes even more challenging when additional algebraic constraints are present, or when we seek to optimize an objective function -- the case for our planning problem: 
+
+ - We seek state and control trajectories $x:[0,T]\!\to\!\mathbb{R}^{n}$ and $u:[0,T]\!\to\!\mathbb{R}^{m}$ that minimize a cost while satisfying the dynamics and constraints:
+
+```math
+\begin{aligned}
+\min_{x(\cdot),\,u(\cdot),\,T}\quad 
+& \Phi\!\big(x(T),T\big) \;+\; \int_{0}^{T} \ell\!\big(x(t),u(t),t\big)\,dt \\[4pt]
+\text{s.t.}\quad 
+& \dot{x}(t) = f\!\big(x(t),u(t),t\big) \qquad \text{(dynamics)} \\[2pt]
+& g\!\big(x(t),u(t),t\big) \le 0 \qquad\qquad\ \text{(path constraints)} \\[2pt]
+& x(0) = x_0, \qquad h\!\big(x(T),T\big)=0 \ \text{or}\ h\!\big(x(T),T\big)\le 0 \quad \text{(boundary)} \\[2pt]
+& u_{\min}\le u(t)\le u_{\max}, \quad x_{\min}\le x(t)\le x_{\max} \quad \text{(box bounds)} \\
+\end{aligned}
+```
+
+In such cases, analytical solutions for the optimal control u(t) and the corresponding state trajectory x(t) are extremely rare.
+
+For this reason, most planning problems are formulated and solved in discrete time.
 
 """
 
-# ╔═╡ 3a576353-76bb-4c12-b2a2-b37e8e1dd17f
-Foldable(md"2 Main issues!",md"""
- - Often, there is no analytical solutions $x(t)$ for a general PDE!
+# ╔═╡ ca9d4d0c-40c2-4144-866f-db1417d42c8f
+md"""
+## Integrators & Discrete--Time Dynamics
 
- - PDEs can't describe discontinuous events!
-""")
+By discretizing our dynamics, we obtain algebraic relations that connect the current state to the state after a time interval $\Delta_t$. Having access to an accurate form of this relationship would allow us to simulate the system from an initial condition $x(0)$ and compute its value at any future time $t$.
+
+The process of deriving such discrete-time relationships from the underlying continuous-time ODEs is, thus, referred to as **Integration**.
+"""
+
+# ╔═╡ 3a576353-76bb-4c12-b2a2-b37e8e1dd17f
+md"
+----
+#### 🚀 Detour:
+
+One crucial aspect that further increases the importance of obtaining a good discrete version of the dynamics is that it also enables us to model **discrete (discontinuous) events**—something that cannot be captured by ODEs alone!  
+
+By carefully identifying the moments at which these discontinuities occur (such as contacts or impacts), we can incorporate them directly into our planning framework.
+
+----
+"
+
+# ╔═╡ 918ba7e9-2986-4708-a43f-d1c0585c2420
+md"Nevertheless, before addressing discontinuous events, let us first understand how to perform the integration of ODEs. In this lecture, we present three classical methods: **Forward Euler**, **Backward Euler**, and **Runge–Kutta**.  "
 
 # ╔═╡ 871587c3-380a-4492-b680-aa7b6dd2004f
-md"""### Explicit Form:
+md"""### Explicit Form
+
+In discrete time, the system dynamics can be expressed as an explicit update rule that maps the current state and control input to the next state:
+
 
 ```math
 x_{t+1} = f_d(x_t, u_t)
 ```
 
-#### Foward Euler Integration:
+Here, $f_d$ represents the discrete-time dynamics, obtained from integrating the continuous-time system over one step of length $\Delta_t$.
+
+#### Forward Euler Integration
+
+One of the simplest ways to approximate this integration is through Forward Euler. In this method, we assume that the derivative of the state remains constant over the interval $\Delta_t$, evaluated at the beginning of the step:
 
 ```math
 x_{t+1} = x_t + \underbrace{\Delta_t \cdot f(x_t, u_t)}_{f_d}
 ```
 
 """
+
+# ╔═╡ c0161e8c-6f55-4484-8f8d-0f72a330aee8
+md"Let us see how this looks like for the pendulum!"
 
 # ╔═╡ 27b490fa-8c2e-4a1a-a6d6-d57ad149a066
 """
@@ -1440,7 +1550,7 @@ begin
 end
 
 # ╔═╡ 19f3d541-7452-4bcc-89e0-51bf5dab34e6
-Foldable(md"#### Why?",md"""
+Foldable(md"#### Why the increase in oscilation?",md"""
 
 ### Forward-Euler update for the undamped pendulum  
 
@@ -1536,7 +1646,7 @@ Assume we are at a equilibrium and we have changed coordinates for $x_{0}=0$
 """
 
 # ╔═╡ 7acd26bc-e35b-47a4-aca3-719f106f3238
-Foldable(md"Conditions on $J_d$ for the system to be stable at $x_0$?",md"""
+Foldable(md"What are the conditions on $J_d$ for the system to be stable at $x_0$?",md"""
 
 ```math
 \lim_{t \rightarrow \infty} J_d^{t} x_0 = 0 \quad \forall x_0
@@ -1551,13 +1661,15 @@ Foldable(md"Conditions on $J_d$ for the system to be stable at $x_0$?",md"""
 
 # ╔═╡ c94a2f37-9782-4fd8-bae3-61fa8f82ca2d
 md"""
-#### pendulum\_euler\_Ad
+#### Pendulum F-Euler
 
-The pendulum Forward--Euler integration:  
+Using Forward Euler, the discrete-time update of the state can be written as: 
 
 ```math
 x_{t+1}=x_t+ \underbrace{\Delta t\,f(x_t)}_{f_d(x_t)}
 ```
+
+Let us look at the Jacobian of the update map:
 
 ```math
 \implies J_d = \frac{\partial f_d}{\partial x} = I + \Delta_t J = I + \Delta_t \begin{bmatrix}
@@ -1566,13 +1678,24 @@ x_{t+1}=x_t+ \underbrace{\Delta t\,f(x_t)}_{f_d(x_t)}
 \end{bmatrix}
 ```
 
+This discrete Jacobian $J_d$ allows us to compute the eigenvalues that determine the stability of the integration scheme.
+
 """
 
 # ╔═╡ 5a1cdae4-2b2f-4df0-866a-6e62be6ddb4a
+"""
+	pendulum_euler_Ad(x0, h)
+
+Jacobian (`Ad`) of the forward euler method for the Pendulum system
+for a given state `x0` and time step `h`.
+"""
 function pendulum_euler_Ad(x0, h)
     g = 9.81 # Gravity
     Ad = [1 h; -g*h*cos(x0[1]) 1]
 end
+
+# ╔═╡ c6b113c0-0c17-448d-a0bb-fe59a635478e
+md"Computing its eigenvalues for small $\Delta_t$ gives:"
 
 # ╔═╡ 8903c3cc-fc4b-4ffa-bf5b-7645724e8b02
 eigvals(pendulum_euler_Ad(0, 0.001))
@@ -1588,15 +1711,26 @@ begin
 end
 
 # ╔═╡ 7ebc1af0-e8d7-40b2-8395-48aaacb272de
-md"#### Always unstable!"
+md"#### Always unstable!
+
+The plot above shows the spectral radius $|\Lambda|_\infty$ of the system as a function of $\Delta_t$.
+
+We see that the magnitude of the eigenvalues is always greater than one, regardless of the choice of $\Delta_t$.
+
+Forward Euler is unconditionally unstable when applied to the pendulum system.
+This highlights the importance of selecting more robust integration schemes when simulating oscillatory or conservative systems.
+"
 
 # ╔═╡ cc5a6c0f-bf72-4e5d-aed6-7cbbadac862a
 md"""
 #### 4ᵗʰ--Order Runge-Kutta Method
 
-Fits a cubic polynomial to to $x(t)$. 
+While Forward Euler is simple, it suffers from severe stability issues, especially for oscillatory systems like the pendulum.  
+To overcome this, one of the most widely used explicit schemes is the **4th–order Runge–Kutta (RK4)** method.  
 
-**A better explicit integrator than when fitting a line!**
+Instead of approximating the trajectory with a straight line (as in Euler), RK4 fits a **cubic polynomial** to the state evolution $x(t)$ over the interval $\Delta_t$. This makes it much more accurate for the same step size.  
+
+Mathematically, the update rule is given by the weighted average of four successive evaluations of the dynamics function:
 """
 
 # ╔═╡ f722b8da-0440-4bc1-8124-84305ef4bd4d
@@ -1607,6 +1741,10 @@ function fd_rk4(xk, h)
     f4 = pendulum_dynamics(xk + h*f3)
     return xk + (h/6.0)*(f1 + 2*f2 + 2*f3 + f4)
 end
+
+# ╔═╡ 52cd86ed-59eb-460d-9307-71a059e0349a
+md"Let us simulate for the pendulum. The function below integrates the pendulum forward in time by repeatedly applying this update rule.
+"
 
 # ╔═╡ 22ab7266-894c-457c-ad19-1c86bbedc0ac
 function rk4(fun, x0, Tf, h)    
@@ -1636,9 +1774,16 @@ begin
 	end
 end
 
+# ╔═╡ c1a14cf0-26f5-4b0c-a095-852fa2baa89d
+md"**Just visually we can see that this is a better explicit integrator than when fitting a line!**
+
+Nevertheless, to assess stability, we compute the eigenvalues of the Jacobian $A_d$ of the discrete--time dynamics.
+
+For small step sizes, the spectral radius $|\Lambda|_\infty$ is close but less than one, indicating stability."
+
 # ╔═╡ 9d6ecd2f-e060-45c9-9a99-03f5f530cf2e
 begin
-	Ad = ForwardDiff.jacobian(x -> fd_rk4(x, 0.01), [0; 0])
+	Ad = ForwardDiff.jacobian(x -> fd_rk4(x, 0.0001), [0; 0])
 	norm.(eigvals(Ad))
 end
 
@@ -1652,18 +1797,27 @@ begin
 	plot(h,eignorm, xlabel="Δₜ", ylabel=L"|Λ|_{∞}", label="")
 end
 
+# ╔═╡ 27fde910-38c7-4e8c-80f8-46031b0caad5
+md"However, for larger $\Delta_t$, instability does eventually appear, as the eigenvalues leave the unit circle."
+
 # ╔═╡ 81940b23-b05d-4f1b-be82-0c34bd0ad21a
 md"""### Implicit Form:
+
+Unlike explicit schemes, **implicit integrators** define the next state through an equation that depends on the *unknown* next state itself. We write:
 
 ```math
 x_{t+1} = f_d(x_{t+1}, u_{t+1})
 ```
 
-#### Backward Euler Integration:
+#### Backward Euler Integration
+
+The simplest implicit method is **Backward Euler**:
 
 ```math
 x_{t+1} = x_t + \underbrace{\Delta_t \cdot f(x_{t+1}, u_{t+1})}_{f_d}
 ```
+
+Consequently, to simulate this system we must solve a (potentially nonlinear) system of equations at each time step.
 
 """
 
@@ -1687,6 +1841,9 @@ function backward_euler(fun, x0, Tf, dt)
     return x_hist, t
 end
 
+# ╔═╡ 2949df90-a0b3-4c22-b052-a0073257cba2
+md"Let us simulate our pendulum:"
+
 # ╔═╡ 86ce1303-e77c-4b93-a2ed-dc0c54a1f191
 md"""
  Sim: $(@bind sim3 CheckBox())
@@ -1701,8 +1858,28 @@ begin
 	end
 end
 
+# ╔═╡ 71f5dc9f-6e6d-4a49-929f-fef60753ec98
+md"Interestingly, we now observe a **loss of energy** at every oscillation.  
+This indicates that the system is **stable**, but not **accurate**."
+
 # ╔═╡ de4807ca-4e17-4020-9810-5f7c0fcae9a3
 question_box(md"### Why most simulators use Backward--Euler?")
+
+# ╔═╡ c8468781-e436-41d5-957b-dd0789de23fd
+md"""
+Each choice of integrator comes with its own **advantages** (e.g., simplicity, accuracy, computational efficiency) and **disadvantages** (e.g., instability that makes simulations unreliable, or artificial energy loss that can falsely suggest stability of states or trajectories). Such inaccuracies may lead to misleading conclusions and, in practice, to dangerous or costly policies.  
+
+Therefore, understanding the strengths and limitations of the available integration methods is a crucial step in effective system modeling and control design.
+"""
+
+# ╔═╡ 488a2656-1eed-4a5b-b31f-d8840bd78822
+md"""## Conclusion on Dynamics
+
+We now have the tools to begin modeling our (discrete) sequential decision problems!  
+In practice, a few additional steps are often required—for example, making assumptions about how control inputs behave between discrete time stamps. (Runge–Kutta, for instance, averages the dynamics at intermediate points between $t$ and $t+1$, thus we need to know the values of $u$ at those points.) These details ensure that the discrete model faithfully represents the underlying continuous system, and we will revisit them in later lectures.  
+
+Once the problem is modeled, the next crucial step is learning **how to solve it**. In the upcoming lectures, we will explore optimization methods and their properties, which will provide the foundation for solving these trajectory optimization and control problems.
+"""
 
 # ╔═╡ b38f09c2-8850-4400-9d63-9cd730077470
 md"""## Optimal Control via Lobatto (Hermite–Simpson) Direct Collocation
@@ -1713,7 +1890,7 @@ We will use
 
 ![logo_infinite](https://raw.githubusercontent.com/infiniteopt/InfiniteOpt.jl/refs/heads/master/full_logo.png)
 
-to solve a simple 2D pendulum control problem.
+to solve a simple 2D pendulum control problem. This package will take care of the extra details we mentioned and will explore in the next lectures.
 
 InfiniteOpt.jl is a package for solving optimal control problems with infinite-dimensional variables, such as those arising from direct collocation methods. It allows us to define the dynamics of a system, constraints, and objectives in a straightforward way, leveraging the power of Julia's optimization ecosystem.
 InfiniteOpt.jl will be in charge of the integration and optimization of the system dynamics, making it easier to solve complex control problems.
@@ -1960,10 +2137,12 @@ PlutoUI.LocalResource(joinpath(class_dir, "double_pendulum_swingup.mp4"))
 # ╟─bd623016-24ce-4c10-acb3-b2b80d4facc8
 # ╟─2d211386-675a-4223-b4ca-124edd375958
 # ╟─45275d44-e268-43cb-8156-feecd916a6da
+# ╟─a876defb-3a1b-4878-8af4-615bb5425794
 # ╟─c08f511e-b91d-4d17-a286-96469c31568a
 # ╟─b3129bcb-c24a-4faa-a5cf-f69ce518ea87
 # ╟─c1f43c8d-0616-4572-bb48-dbb71e40adda
 # ╟─57d896ca-221a-4cfc-b37a-be9898fac923
+# ╟─f37c72a5-16bc-4969-9a5d-41bf3294c7dc
 # ╟─52005382-177b-4a11-a914-49a5ffc412a3
 # ╟─8ea866a6-de0f-4812-8f59-2aebec709243
 # ╟─2be161cd-2d4c-4778-adca-d45f8ab05f98
@@ -2021,9 +2200,13 @@ PlutoUI.LocalResource(joinpath(class_dir, "double_pendulum_swingup.mp4"))
 # ╟─04b6560f-aee2-41fd-86fa-d075f0b3d738
 # ╟─c7b11f27-1582-45d0-adef-32eb9c6de588
 # ╟─4cd2306d-e3f3-4895-8798-596f6c353bdc
+# ╟─0047390a-86be-4de0-8671-6c7e4db01669
+# ╟─c15fba37-53c2-408d-bb3d-c1b7b82b1f6f
 # ╟─ca9d4d0c-40c2-4144-866f-db1417d42c8f
 # ╟─3a576353-76bb-4c12-b2a2-b37e8e1dd17f
+# ╟─918ba7e9-2986-4708-a43f-d1c0585c2420
 # ╟─871587c3-380a-4492-b680-aa7b6dd2004f
+# ╟─c0161e8c-6f55-4484-8f8d-0f72a330aee8
 # ╠═29df2037-456f-4f98-9e32-71037e3d76c4
 # ╠═27b490fa-8c2e-4a1a-a6d6-d57ad149a066
 # ╠═f6c075f9-9d79-46ba-870e-e12c2b3357df
@@ -2034,22 +2217,30 @@ PlutoUI.LocalResource(joinpath(class_dir, "double_pendulum_swingup.mp4"))
 # ╟─800341e2-de0d-43a4-b0f1-a74021963f43
 # ╟─7acd26bc-e35b-47a4-aca3-719f106f3238
 # ╟─c94a2f37-9782-4fd8-bae3-61fa8f82ca2d
-# ╠═5a1cdae4-2b2f-4df0-866a-6e62be6ddb4a
+# ╟─5a1cdae4-2b2f-4df0-866a-6e62be6ddb4a
+# ╟─c6b113c0-0c17-448d-a0bb-fe59a635478e
 # ╠═8903c3cc-fc4b-4ffa-bf5b-7645724e8b02
 # ╟─bc3b48bd-0a4b-4282-84dd-cbb7bf6b084e
 # ╟─7ebc1af0-e8d7-40b2-8395-48aaacb272de
 # ╟─cc5a6c0f-bf72-4e5d-aed6-7cbbadac862a
 # ╠═f722b8da-0440-4bc1-8124-84305ef4bd4d
+# ╟─52cd86ed-59eb-460d-9307-71a059e0349a
 # ╠═22ab7266-894c-457c-ad19-1c86bbedc0ac
 # ╟─d7ccbcdc-8343-4639-bc3a-92d24c7a6c0c
 # ╟─ebe3f468-e6b7-4afa-8bb6-5ef9ca182e65
+# ╟─c1a14cf0-26f5-4b0c-a095-852fa2baa89d
 # ╠═9d6ecd2f-e060-45c9-9a99-03f5f530cf2e
 # ╟─ab0a2cc8-a4a4-42a8-a1e4-c104ee2ba995
+# ╟─27fde910-38c7-4e8c-80f8-46031b0caad5
 # ╟─81940b23-b05d-4f1b-be82-0c34bd0ad21a
 # ╠═1f0b068a-da49-4fc5-a91b-fc6da9ecc434
+# ╟─2949df90-a0b3-4c22-b052-a0073257cba2
 # ╟─86ce1303-e77c-4b93-a2ed-dc0c54a1f191
 # ╟─b857efd5-dba1-4872-b133-59e80d7cd489
+# ╟─71f5dc9f-6e6d-4a49-929f-fef60753ec98
 # ╟─de4807ca-4e17-4020-9810-5f7c0fcae9a3
+# ╟─c8468781-e436-41d5-957b-dd0789de23fd
+# ╟─488a2656-1eed-4a5b-b31f-d8840bd78822
 # ╟─b38f09c2-8850-4400-9d63-9cd730077470
 # ╠═52712a4b-8c4b-4637-943d-fdb0f5e9e944
 # ╠═b52a09e7-e3e8-431a-ab91-6e5627138789
