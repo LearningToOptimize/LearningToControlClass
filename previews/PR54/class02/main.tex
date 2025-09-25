@@ -1,0 +1,82 @@
+\documentclass[aspectratio=169,11pt]{beamer}
+
+% --- Theme (portable by default; auto-use metropolis if available) ---
+\newif\ifusemetropolis
+\IfFileExists{beamerthememetropolis.sty}{\usemetropolistrue}{\usemetropolisfalse}
+\ifusemetropolis
+  \usetheme[numbering=fraction]{metropolis} % nice minimal look with x/y counter
+  \metroset{block=fill,progressbar=foot,sectionpage=progressbar}
+\else
+  \usetheme{Boadilla}
+  \usecolortheme{seahorse}
+  \setbeamertemplate{footline}[frame number] % x/y in the footer
+\fi
+\setbeamertemplate{navigation symbols}{} % hide nav icons
+
+% --- Packages you’ll likely want for math/notation ---
+\usepackage{amsmath,amssymb,mathtools}
+\usepackage{bm}
+\usepackage{graphicx}
+\usepackage{booktabs} % tables later if needed
+\usepackage{microtype} % nicer text (pdflatex)
+\usetikzlibrary{positioning,arrows.meta}
+
+% --- Handy macros for optimization/control ---
+\DeclareMathOperator*{\argmin}{arg\,min}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\ip}[2]{\left\langle #1,\, #2 \right\rangle}
+\newcommand{\norm}[1]{\left\lVert #1 \right\rVert}
+\providecommand{\grad}{\nabla}
+\providecommand{\hess}{\nabla^2}
+\newcommand{\Lag}{\mathcal{L}}
+
+% --- Auto section title frames (useful as your deck grows) ---
+\AtBeginSection{
+  \begin{frame}[plain]
+    \vfill
+    \centering
+    {\usebeamerfont{title}\insertsection}
+    \vfill
+  \end{frame}
+}
+
+\usetikzlibrary{positioning,arrows.meta}
+\tikzset{
+  >=Stealth,
+  box/.style={
+    draw,
+    rounded corners,
+    align=center,
+    inner sep=4pt,
+    minimum width=3.2cm,
+    minimum height=1.1cm
+  }
+}
+
+
+% Use outer theme that shows dots for sections
+%\useoutertheme{miniframes}
+ 
+
+
+
+% --- Title info (update these) ---
+\title{Lecture 2: Numerical Optimization for Control\\\small(grad/SQP/QP; ALM vs. interior-point vs. penalty)} 
+\author{Arnaud Deza}
+\institute{ISYE 8803: Special Topics on Optimal Control and Learning}
+\date{\today}
+
+ 
+
+
+\begin{document}
+\include{intro}
+\include{notation}
+\include{root_finding} 
+\include{eq_constraints}
+\include{ineq_constraints}
+\include{SQP}
+
+\end{document}
