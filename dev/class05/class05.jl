@@ -78,10 +78,8 @@ end
 
 # ╔═╡ bfc7cced-3ce7-4f2b-8ee9-424d6d5ba682
 md"
-Trajectory optimization problems of systems with linear dynamics can likely be modeled as LQR (refer to Lecture 3), since quadratic functions are often good enough to be used as the cost.
-Many nice properties then ensue.
-
-However, the reality is often harsh.
+For systems with linear dynamics, if quadratic functions are good enough to represent the cost (which often is the case), then the trajectory optimization problem can be modeled as LQR (refer to Lecture 3).
+However, the real world is hardly linear, and a linear approximation of the dynamics could prove insufficient given the specific setting of the problem.
 
 # Nonlinear Trajectory Optimization
 
@@ -96,7 +94,7 @@ However, the reality is often harsh.
 ```
 
 This trajectory optimization problem is often nonlinear in practice.
-Nonlinear dynamics causes the problem to be nonconvex. Nonlinearity could also arise from additional constraints.
+Nonlinear dynamics causes the problem to be nonconvex. Nonlinearity could also arise from additional constraints, not just the dynamics.
 "
 
 # ╔═╡ 5f190a4e-d4b6-4279-8757-b0ec89df987f
@@ -223,7 +221,7 @@ may be enforced to prevent slipping, where $f$ is the applied force, $\mu$ is th
 
 # ╔═╡ 055ac28a-2fbd-4777-b683-688ae6b10a89
 Foldable(md"Model choice: when does a linear controller suffice in robotics?", md"
-> If you're not pushing the performance limit (e.g. of the actuators), then you can probably use a linear model. [^cmu11]
+> If you're not pushing the performance limit, then you can probably use a linear model. [^cmu11]
 
 In a recent paper [^li2024], legged robots are controlled with linear controllers using data-driven Koopman linearization to walk.
 ![unitree](https://arxiv.org/html/2411.14321v3/x3.png)
@@ -291,6 +289,8 @@ The optimization problem is
 	& ...
 \end{align*}
 ```
+
+How to express these variables at the collocation points? If we know the splines, then we can express them. We will explore how to do this in the following part.
 "
 
 # ╔═╡ 165297a6-854f-475c-a16a-637de6dc9b69
@@ -345,7 +345,7 @@ C_{0} \\ C_{1} \\ C_{2} \\ C_{3}
 \end{pmatrix}
 ```
 
-Now we can represent the values at the collocation point:
+Now we can represent the variables at the collocation point, by plugging in the expressions of the $C$ we just derived:
 ```math
 \begin{align*}
 x(t_{k + \frac{1}{2}}) &= x(t_{k} + \frac{h}{2}) \\
@@ -362,13 +362,10 @@ u(t_{k + \frac{1}{2}}) = u(t_{k} + \frac{h}{2}) = \frac{1}{2} (u[k] + u[k+1])
 ```
 since its trajectory is approximated with a linear spline.
 
-And we can replace the expressions into the dynamics constraint at the collocation point
+Now we can plug these expressions into the dynamics constraint at the collocation point
 ```math
 \dot{x}(t_{k + \frac{1}{2}}) = f(x(t_{k + \frac{1}{2}}), u(t_{k + \frac{1}{2}}))
 ```
-
-(Note that all these are specific to one particular interval $(t_{k}, t_{k+1})$, even though the time indices are omitted for most of the notations.)
-
 "
 
 # ╔═╡ d75262d5-24b0-47f3-9010-264c43fa72e5
@@ -386,15 +383,15 @@ One can approximate integrals with Simpson's rule for integration:
 \int_{t_{0}}^{t_{f}} w(\tau) d\tau \approx \sum_{k=0}^{N-1} \frac{h_{k}}{6} (w_{k} + 4w_{k+\frac{1}{2}} + w_{k+1})
 ```
 
-This approximation can be applied both to to the **dynamics**:
+When applied to the following expression implied by the dynamics
 ```math
 \int_{t_{k}}^{t_{k+1}} \dot{x}(\tau) d\tau = \int_{t_{k}}^{t_{k+1}} f(x(\tau), u(\tau)) d\tau
 ```
-can be approximated with
-(notations have been abbreviated)
+the approximation is
 ```math
 x[k+1] - x[k] = \frac{1}{6} h_{k} (f_{k} + 4f_{k + \frac{1}{2}} + f_{k+1})
 ```
+where the short-hand notations like $f_{k}$ represent $f(x(t_{k}), u(t_{k}))$, etc.
 
 Rearranging the terms, we can get
 ```math
@@ -636,6 +633,8 @@ md"
 ## Differential Dynamic Programming
 
 ##### Approximate dynamic programming
+This is an approach to solving the often intractable dynamic programming problem. We have covered dynamic programming in Class 4.
+
 Instead of computing the value function at each time step exactly in its entirety,
 1. Simulate one particular trajectory
 2. (Backward pass) Update value function approximations to match the simulated data as well as possible: 
@@ -655,7 +654,7 @@ md"
 ---
 The general idea of differential dynamic programming is approximating the value function with the second-order Taylor approximation around a nominal trajectory and updating the trajectory little-by-little in every iteration.
 
-In the following, time step subscripts and indices will be omitted for conciseness, unless the context involves terms corresponding to different time steps, in which case we will use $t$ to denote the time step as $k$ will be used to denote something else later.
+In the following, time step subscripts and indices will be omitted for conciseness, unless the context involves terms corresponding to different time steps, in which case we will use $t$ to denote the time step.
 
 Let us write the second-order Taylor expansion of the value function near $x$ at a particular time step as
 ```math
@@ -668,7 +667,10 @@ V_{x} = \nabla_{x} \ell_{f}(x), \qquad V_{xx} = \nabla^{2}_{xx} \ell_{f}(x)
 
 In our case, the definition of the action-value function (Q-function) is:
 ```math
-Q[t](x[t] + \Delta x[t], u[t] + \Delta u[t]) = \ell_{t}(x[t] + \Delta x[t], u[t] + \Delta u[t]) + V[t+1](f(x[t] + \Delta x[t], u[t] + \Delta u[t]))
+Q[t](x[t] + \Delta x[t], u[t] + \Delta u[t]) =
+```
+```math
+\ell_{t}(x[t] + \Delta x[t], u[t] + \Delta u[t]) + V[t+1](f(x[t] + \Delta x[t], u[t] + \Delta u[t]))
 ```
 
 The second-order Taylor expansion of the action-value function (Q-function, the cost of the current action in the current state plus the value function of the new state) near $x$ and $u$ is
@@ -681,15 +683,14 @@ Q(x + \Delta x, u + \Delta u) \approx Q(x, u) + \begin{pmatrix} Q_{x} \\ Q_{u} \
 \end{pmatrix}
 \begin{pmatrix} \Delta x \\ \Delta u \end{pmatrix}
 ```
-
-Note that these gradient and Hessian terms of $Q[t]$ are expressed in terms of $V_{x}[t+1]$ and $V_{xx}[t+1]$ (as well as gradient and Hessian of $f$).
+where the gradient and Hessian terms of $Q[t]$ are expressed in terms of $V_{x}[t+1]$ and $V_{xx}[t+1]$ (as well as gradient and Hessian of $f$; recall the definition of the $Q$ function).
 
 By definition,
 ```math
 V(x + \Delta x) = \min_{\Delta u} Q(x + \Delta x, u + \Delta u)
 ```
 
-The gradient of $Q(x + \Delta x, u + \Delta u)$ with respect to $\Delta u$ is
+The gradient of the approximation of $Q(x + \Delta x, u + \Delta u)$ with respect to $\Delta u$ is
 ```math
 Q_{u} + Q_{uu} \Delta u + Q_{ux} \Delta x
 ```
@@ -702,7 +703,7 @@ As mentioned earlier, $k[t]$ and $K[t]$ depend on $V[t+1]$.
 This implies that $V_{x}$ and $V_{xx}$ of each time step should be iteratively updated, starting from the last time step backward to the first time step.
 So let us assume that we have updated $V[t+1]$, and would like to now use the updated $\Delta u^{*}$ to update $V_{x}[t]$ and $V_{xx}[t]$.
 
-Plugging $\Delta u^{*}$ into $Q(x + \Delta x, u + \Delta u)$ produces an expression of $V(x + \Delta x)$ (since $\Delta u^{*}$ is the minimizer).
+Plugging $\Delta u^{*}$ into $Q(x + \Delta x, u + \Delta u)$, we get $V(x + \Delta x)$ (since $\Delta u^{*}$ is a minimizer).
 With some computation, we get the updated values
 ```math
 V_{x} = Q_{x} + Q_{xu}^{\top} k \qquad V_{xx} = Q_{xx} + Q_{xu}^{\top} K
@@ -718,7 +719,12 @@ Overall, the algorithm can be summarized as:
 "
 
 # ╔═╡ 71322a24-2eb6-48ef-b652-bd7105ccdea8
-question_box(md"Can you think of one advantage collocation has over the vanilla differential DP? (Hint: think about what is easy to be added to an optimization problem but not to the backward pass of differential DP)")
+question_box(md"Can you think of one advantage collocation has over differential DP? (Hint: think about what is easy to be added to an optimization problem but not to the backward pass of differential DP).")
+
+# ╔═╡ 98a56727-c565-4359-8c9d-73f2566e3413
+Foldable(md"Answer...", md"
+Additional constraints (on $x$ or $u$) can be easily imposed in collocation, but not so in differential DP. Techniques for imposing constraints in differential DP have been developed in the recent years, and you may read about them if interested.
+")
 
 # ╔═╡ Cell order:
 # ╟─2fe513ba-9310-11f0-2266-9730fc13e5da
@@ -767,3 +773,4 @@ question_box(md"Can you think of one advantage collocation has over the vanilla 
 # ╟─9932b4dc-4b6e-4a81-8f14-dc71c4c597fc
 # ╟─65269bed-858b-4aa6-b8fc-c631a5b5b429
 # ╟─71322a24-2eb6-48ef-b652-bd7105ccdea8
+# ╟─98a56727-c565-4359-8c9d-73f2566e3413
