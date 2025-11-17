@@ -1,0 +1,1413 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{CambridgeUS}
+\usecolortheme{dolphin}
+\setbeamertemplate{navigation symbols}{}
+\usepackage[utf8]{inputenc}
+\usepackage{hyperref}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\title{Dynamic Optimal Control of Power Systems}
+\author{Shuaicheng Tong}
+\date{}
+
+\begin{document}
+
+\begin{frame}
+  \titlepage
+\end{frame}
+
+\begin{frame}{Outline}
+  \begin{itemize}
+    \item Transients
+    \item Generator swing equations
+    \item Inverters
+    \item Dynamic Load Models
+  \end{itemize}
+\end{frame}
+
+% % --- Fuel-Powered Plants
+% \begin{frame}{What is Power System?}
+% \textbf{Fuel-Powered Plants}
+% \begin{columns}[T,onlytextwidth]
+% \column{0.5\textwidth}
+% \begin{itemize}
+%   \item Coal Power Plants
+%   \item Natural Gas Plants
+%   \item Nuclear Power Plants
+% \end{itemize}
+% \column{0.5\textwidth}
+% \begin{figure}
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/gasPlant.jpeg}
+% \caption{Gas Power Plant}
+% \end{figure}
+% \end{columns}
+% \end{frame}
+
+% % --- Renewable Generation
+% \begin{frame}{What is Power System?}
+% \begin{columns}[T,onlytextwidth]
+% \column{0.5\textwidth}
+% \textbf{Renewable Generation}
+% \begin{itemize}
+%   \item Wind Farms
+%   \item Solar Plants
+%   \item Hydroelectric Plants
+% \end{itemize}
+% \column{0.5\textwidth}
+% \begin{figure}
+% \centering
+% \includegraphics[width=0.8\textwidth]{images/hydroPlant.jpg}
+% \caption{Hydroelectric Plant}
+% \end{figure}
+% \end{columns}
+% \end{frame}
+
+% % --- Warm-up
+% \begin{frame}{Warm-up Questions}
+% \begin{itemize}
+%   \item Classic problems in power system:
+%   \begin{itemize}
+%     \item Optimization
+%     \item Generator Dispatch
+%   \end{itemize}
+%   \item How they relate to control
+%   \begin{itemize}
+%     \item Think general control that you see in your daily life for now: flipping a switch, pressing a button, etc.
+%   \end{itemize}
+%   \item What real-world problems are they trying to address
+%   \item What problems they are \emph{not} addressing
+%   \item What are the constraints? Which are soft and which are hard?
+% \end{itemize}
+% \end{frame}
+
+% --- 3 Bus Network – Economic Dispatch
+\begin{frame}{3 Bus Network -- Economic Dispatch}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\textwidth}
+\begin{itemize}
+  \item Bus 1 load: 50 MW
+  \item Bus 3 load: 75 MW
+  \item Generator 1: Capacity 100 MW, Cost \$8/MW
+  \item Generator 2: Capacity 40 MW, Cost \$2/MW
+\end{itemize}
+\column{0.5\textwidth}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/3Bus.png}
+\caption{3-Bus Power System Network}
+\end{figure}
+\end{columns}
+\end{frame}
+
+% % --- Economic Dispatch Question
+% \begin{frame}{Economic Dispatch Question}
+% \begin{block}{Question}
+% What is the Economic Dispatch problem (in its most basic form)?
+% \end{block}
+% \begin{block}{Answer}
+% An optimization problem that aims to find the lowest-cost generation dispatch that satisfies the load demand given the load, generation, and cost.
+% \end{block}
+% \end{frame}
+
+% --- QP formulation of ED
+\begin{frame}{Quadratic Program (QP) formulation of ED}
+\begin{align}
+\min_{p_g} \quad & \sum_{g \in \mathcal{G}} C_g(p_g) \\
+\text{s.t.} \quad & \sum_{g \in \mathcal{G}} p_g = \sum_{d \in \mathcal{D}} P_d \quad \text{(power balance)} \\
+& p_g^{\min} \leq p_g \leq p_g^{\max} \quad \forall g \in \mathcal{G} \quad \text{(capacity bounds)}
+\end{align}
+
+where:
+\begin{itemize}
+  \item $p_g$: power output of generator $g$
+  \item $C_g(p_g)$: cost function of generator $g$ (often quadratic: $a_g p_g^2 + b_g p_g + c_g$)
+  \item $P_d$: power demand at load $d$
+  \item $\mathcal{G}$: set of generators, $\mathcal{D}$: set of loads
+\end{itemize}
+\end{frame}
+
+% --- Exercise - formulate the ED problem for the 3-bus network
+\begin{frame}{Exercise: Formulate the ED problem for the 3-bus network}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/3Bus.png}
+\caption{3-Bus Power System Network}
+\end{figure}
+\end{frame}
+
+% --- ED Formulation Answer
+\begin{frame}{ED Formulation Answer}
+\begin{align}
+\min_{p_1, p_2} \quad & 8p_1 + 2p_2 \\
+\text{s.t.} \quad & p_1 + p_2 = 125 \quad \text{(power balance)} \\
+& 0 \leq p_1 \leq 100 \quad \text{(Gen 1 limits)} \\
+& 0 \leq p_2 \leq 40 \quad \text{(Gen 2 limits)}
+\end{align}
+
+\textbf{Solution:} $p_1 = 85$ MW, $p_2 = 40$ MW
+\begin{itemize}
+  \item Total cost: $8 \times 85 + 2 \times 40 = 760$ \$/hour
+  \item Gen 2 at maximum capacity (greedy)
+  \item Gen 1 supplies remaining demand
+\end{itemize}
+\end{frame}
+
+% --- Discussion Questions
+\begin{frame}{Discussion Questions}
+What do you observe from your formulation?
+\begin{itemize}
+  \item What kind of problem is this (linear, quadratic, etc.)?
+  \item The power network is a graph -- what type? What is missing here?
+  \item The flow is not controllable - we did not place branch constraints.
+\end{itemize}
+\end{frame}
+
+% --- What's the Problem?
+\begin{frame}{What's the Problem?}
+\begin{itemize}
+  \item The graph should be directed: power has flow directions
+  \item Line ratings and safety are ignored in ED
+  % \item I like to think about suspension bridges over rivers. Is it safe for hundreds of people to cross at the same time? Would it be safe for the concrete bridge on 5th street?
+  \item Overloading lines is dangerous (thermal expansion, sag, wildfire risk)
+  \item What is a power line:
+  \begin{itemize}
+    \item Metal coil that expands and heats up when current is higher.
+    \item That’s why we have rating (magnitude of power flow cannot exceed this amount). Physically you can exceed it (nothing is preventing the power to flow) a bit, but there are consequences above ...
+  \end{itemize}
+  \item We need branch (line) constraints to ensure safe operation
+\end{itemize}
+\end{frame}
+
+% --- DC Power Flow
+\begin{frame}{DC Power Flow}
+\textbf{Data:}
+\begin{itemize}
+  \item Generator set $\mathcal{G}_i$ at bus $i$ (nodal generation)
+  \item Load set $\mathcal{L}_i$ at bus $i$ (nodal load)
+  \item Costs $C_j(P_j)$ quadratic or piecewise-linear for generator $j$
+  \item Line limits $F_\ell^{\max}$, generator bounds $P_j^{\min}, P_j^{\max}$
+\end{itemize}
+
+\textbf{Decision variables:}
+\begin{itemize}
+  \item Generator outputs $P_j$ for $j \in \mathcal{G}_i$
+  \item Bus angles $\theta_i$ for $i \in \mathcal{N}$
+  \item Line flows $f_\ell$ for $\ell \in \mathcal{L}$
+\end{itemize}
+\end{frame}
+
+% --- DC Power Flow Formulation
+\begin{frame}{DC Power Flow Formulation}
+\begin{align}
+\min_{P_j, \theta} \quad & \sum_{i \in \mathcal{N}} \sum_{j \in \mathcal{G}_i} C_j(P_j) \\
+\text{s.t.} \quad & \sum_{j \in \mathcal{G}_i} P_j - \sum_{j \in \mathcal{L}_i} P_j = \sum_{k: (i,k) \in \mathcal{L}} \frac{1}{x_{ik}} (\theta_i - \theta_k) \quad \forall i \in \mathcal{N} \\
+& f_\ell = \frac{1}{x_\ell} (\theta_{i(\ell)} - \theta_{j(\ell)}), \quad -F_\ell^{\max} \leq f_\ell \leq F_\ell^{\max} \quad \forall \ell \in \mathcal{L} \\
+& P_j^{\min} \leq P_j \leq P_j^{\max} \quad \forall j \in \mathcal{G}_i, \forall i \in \mathcal{N} \\
+& \theta_{\text{ref}} = 0
+\end{align}
+
+\begin{itemize}
+  \item $x_{ij}$: reactance of line. $1/x_{ij} = b_{ij}$: susceptance (manufacturer specified)
+  \item Reference bus: only for modeling, you can pick any bus as the reference bus. We only care about angle differences (which carries current through lines
+  \item Individual bus angle has no physical meaning
+\end{itemize}
+\end{frame}
+
+% --- Exercise: solve DCOPF after ED
+\begin{frame}{Exercise: Solve DCOPF (solver suggested: Ipopt)}
+\begin{figure}
+\centering
+\includegraphics[width=0.7\textwidth]{images/3BusWConstraints.png}
+\caption{3-Bus Network with Constraints}
+\end{figure}
+
+\textbf{How did I get the numbers:}
+\begin{itemize}
+  \item Assume P1 generates 85 MW, with 50 MW of load, the net injection is 35 MW
+  \item Assume P2 generates 40 MW, with no load, net injection is 40 MW (we take upwards arrow as injection)
+  \item Bus 3 has no gen, only load
+\end{itemize}
+\end{frame}
+
+% --- DCOPF Solution
+\begin{frame}{DCOPF Solution}
+\begin{figure}
+\centering
+\includegraphics[width=0.3\textwidth]{images/DCOPFAnswer1.png}
+\caption{DCOPF Solution Results}
+\end{figure}
+\end{frame}
+
+% --- DCOPF Solution Details
+\begin{frame}{DCOPF Solution Details}
+\begin{figure}
+\centering
+\includegraphics[width=0.5\textwidth]{images/DCOPFAnswer2.jpeg}
+\caption{DCOPF Detailed Analysis}
+\end{figure}
+\end{frame}
+
+% --- Wrap up
+\begin{frame}{Wrap Up}
+\begin{itemize}
+  \item You will see that without thermal limits, optimal dispatch can overload lines
+  % \item In operation, operators typically solve a DCOPF (e.g., with Ipopt solver)
+  \item Reference bus is arbitrarily picked by the solver.
+  \item Real systems are AC (complex voltages/currents) -- much harder. This is just a lightweight intro so we can think about expressing real-world problems as optimization formulations without overburdening ourselves with AC physics, which we will see in transient stability section.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Introduction to Transient Stability}
+\begin{center}
+\Huge
+Transient Dynamics
+\end{center}
+\end{frame}
+
+\begin{frame}{What are transients?}
+When current or voltage changes suddenly — switching, faults, lightning, equipment failures, etc. — the system experiences a \textbf{transient}
+\begin{itemize}
+  \item Transients are short-lived, high-frequency events where stored magnetic and electric energy exchange rapidly.
+  \item \textbf{Faraday’s law} of electromagnetic induction governs these effects:\\[4pt]
+    A change in magnetic flux through a circuit induces a voltage across it.
+    \begin{align*}
+      v(t) &= \frac{d\Phi(t)}{dt}
+    \end{align*}
+    where $\Phi(t)$ is the magnetic flux through the circuit.
+\end{itemize}
+
+
+\end{frame}
+
+\begin{frame}{Transients Continued}
+\begin{itemize}
+  \item For an inductor, the magnetic flux $\Phi$ is proportional to the current:
+    \begin{align*}
+      \Phi(t) &= L\,i(t)
+    \end{align*}
+    where $L$ is the inductance (magnetic energy stored per unit current).
+  \item Substituting gives the familiar time-domain voltage rule:
+    \begin{align*}
+      \boxed{v_L(t) = L\,\frac{di(t)}{dt}}
+    \end{align*}
+\end{itemize}
+Note that steady-state phasor analysis no longer holds due to the time-varying nature of the magnetic flux. I will draw the connection later.
+\end{frame}
+
+\begin{frame}{Sinusoidal steady state}
+  Assume all quantities have angular frequency $\omega$:
+  \begin{align*}
+    i(t) &= \operatorname{Re}\!\left\{ I\,e^{j\omega t} \right\}, \\
+    % v_L(t) &= \operatorname{Re}\!\left\{ V\,e^{j\omega t} \right\}.
+  \end{align*}
+  Differentiate the current:
+  \begin{align*}
+    \frac{di(t)}{dt} &= \operatorname{Re}\!\left\{ j\omega I\, e^{j\omega t} \right\}.
+  \end{align*}
+
+  Substitute into $v_L(t) = L\,\frac{di}{dt}$:
+  \begin{align*}
+    v_L(t) &= \operatorname{Re}\!\left\{ (j\omega L I)\, e^{j\omega t} \right\}.
+  \end{align*}
+\end{frame}
+
+\begin{frame}{Phasor (frequency-domain) relation}
+  By definition, the \textbf{phasor} is the complex amplitude multiplying $e^{j\omega t}$.
+
+  From the previous expression,
+  \begin{align*}
+    v_L(t) &= \operatorname{Re}\!\left\{ (j\omega L I)\, e^{j\omega t} \right\},
+  \end{align*}
+  so the \textbf{voltage phasor} is
+  \begin{align*}
+    \boxed{V = j\omega L\, I}.
+  \end{align*}
+
+  % Thus the inductor's impedance is
+  % \begin{align*}
+  %   \boxed{Z_L = \frac{V}{I} = j\omega L}.
+  % \end{align*}
+\end{frame}
+
+% ======================================================
+\begin{frame}{Capacitor law: from time domain to phasor domain}
+  \textbf{Physical basis:}
+  \begin{itemize}
+    \item A capacitor stores energy in an \textbf{electric field}.The stored charge $q(t)$ is proportional to voltage:
+      \begin{align*}
+        q(t) &= C\,v(t)
+      \end{align*}
+      where $C$ is the capacitance.
+    \item The current is the rate of change of charge:
+      \begin{align*}
+        \boxed{i_C(t) = \frac{dq(t)}{dt} = C\,\frac{dv(t)}{dt}}.
+      \end{align*}
+  \end{itemize}
+
+  \textbf{Under sinusoidal steady state:}
+  \begin{align*}
+    v(t) &= \operatorname{Re}\!\left\{ V e^{j\omega t} \right\}
+  \end{align*}
+  where $V$ is the voltage phasor.
+\end{frame}
+
+\begin{frame}{Capacitor law: from time domain to phasor domain}
+  \begin{align*}
+    \frac{dv(t)}{dt} &= \operatorname{Re}\!\left\{ j\omega V e^{j\omega t} \right\}, \\
+    i_C(t) &= \operatorname{Re}\!\left\{ (j\omega C V) e^{j\omega t} \right\}.
+  \end{align*}
+
+  Hence, the \textbf{phasor relationship} is:
+  \begin{align*}
+    \boxed{I = j\omega C\,V}, \qquad
+    \boxed{Y_C = j\omega C}, \qquad
+    \boxed{Z_C = \frac{1}{j\omega C}}.
+  \end{align*}
+You could of course derive admittance and impedance for inductors following similar steps. This is how you go from time domain to phasor domain. Note that the above is for ideal inductors and capacitors.
+\end{frame}
+
+% ======================================================
+\begin{frame}{More realistic transmission line model}
+  The voltage $v(x,t)$ and current $i(x,t)$ vary \textbf{both} in time and along the line coordinate $x$.
+  Their spatial derivatives represent how these quantities change \textbf{per unit length:}
+  \begin{align*}
+    \frac{\partial v(x,t)}{\partial x} &\;\Rightarrow\; \text{voltage drop per unit length (V/m)}, \\
+    \frac{\partial i(x,t)}{\partial x} &\;\Rightarrow\; \text{current change per unit length (A/m)}.
+  \end{align*}
+  \textbf{Real lines are lossy:}
+      \begin{itemize}
+        \item Conductor series resistance causes Ohmic losses (heat dissipation) $\Rightarrow$ add $-R'\,i(x,t)$.
+        \item Current leakage due to shunt conductance $\Rightarrow$ add $-G'\,v(x,t)$.
+      \end{itemize}
+      \vspace{0.2cm}
+      Hence, the full \textbf{telegrapher's equations} become:
+      % \begin{align*}
+      %   \frac{\partial v(x,t)}{\partial x} &= -L'\frac{\partial i(x,t)}{\partial t} - R'\,i(x,t),\\
+      % \end{align*}
+  \end{frame}
+
+\begin{frame}{More on realistic transmission line model}
+  \begin{align*}
+    \frac{\partial v(x,t)}{\partial x} &= -L'\frac{\partial i(x,t)}{\partial t} - R'\,i(x,t),\\
+    \frac{\partial i(x,t)}{\partial x} &= -C'\frac{\partial v(x,t)}{\partial t} - G'\,v(x,t).
+  \end{align*}
+  You can think about $R'$ and $G'$ as damping terms. $L$ and $C$ relate to energy storage, and $R$ and $G$ relate to energy dissipation.
+
+  % The minus sign is because we take the forward direction as positive for $x$, while voltage and current drop in the same direction (they diminish due to energy storage or loss).
+\end{frame}
+
+% ======================================================
+\begin{frame}{How the above was derived}
+
+  \textbf{Setup:} Consider a small transmission line segment between $x$ and $x+dx$.
+  \begin{itemize}
+    \item $x$ increases in the direction of current flow ($+x$).
+    \item $i(x,t)$: current flowing in $+x$ direction.
+    \item $v(x,t)$: voltage between conductors (top to bottom) at position $x$.
+  \end{itemize}
+
+  \textbf{1. Voltage change between segment ends:}
+  \[
+  v(x,t) - v(x+dx,t) = -\frac{\partial v(x,t)}{\partial x}\,dx.
+  \]
+
+  \textbf{2. Series drops over $dx$:}
+  \begin{align*}
+    \text{Resistive drop} &:\; R'\,i(x,t)\,dx,\\
+    \text{Inductive drop} &:\; L'\,\frac{\partial i(x,t)}{\partial t}\,dx.
+  \end{align*}
+\end{frame}
+
+\begin{frame}{How the above was derived}
+  \textbf{3. Apply Kichhoff Voltage Law:}\\[2pt]
+  (The sum of voltage drops along the closed path must equal zero.)
+  \[
+  (R'\,i + L'\tfrac{\partial i}{\partial t})\,dx + \big[v(x+dx,t) - v(x,t)\big] = 0.
+  \]
+
+  \textbf{4. Substitute and simplify:}
+  \[
+  \frac{\partial v(x,t)}{\partial x}\,dx = -L'\frac{\partial i(x,t)}{\partial t}\,dx - R'\,i(x,t)\,dx.
+  \]
+
+  \textbf{5. Divide by $dx$:}
+  \[
+  \boxed{\frac{\partial v(x,t)}{\partial x} = -L'\frac{\partial i(x,t)}{\partial t} - R'i(x,t)}.
+  \]
+
+  \small The negative sign indicates that voltage \emph{drops} in the $+x$ direction
+  due to both inductive ($L'\,\partial i/\partial t$) and resistive ($R'i$) effects.
+\end{frame}
+
+
+\begin{frame}{How does physics relate to optimization?}
+  \LARGE
+  Transient Stability Constrained Optimal Power Flow (TSCOPF)
+\end{frame}
+
+\begin{frame}{TSCOPF formulation}
+  \begin{align*}
+  \min_{p,\,x(t),\,y(t)} \quad & C(p)  && \text{(1)}\\
+  \text{s.t.}\quad
+  & g_s(p) = 0 && \text{(2)}\\
+  & h_s^{-} \le h_s(p) \le h_s^{+} && \text{(3)}\\
+  & p^{-} \le p \le p^{+} && \text{(4)}\\[3pt]
+  & \dot{x} = f(x,y,p), \quad x(t_0)=I_x^0(p) && \text{(5)}\\
+  & 0 = g(x,y,p), \quad y(t_0)=I_y^0(p) && \text{(6)}\\
+  & h(x(t),y(t)) \le 0, \quad \forall t && \text{(7)}
+  \end{align*}
+
+  \textbf{Objective:} minimize operating cost or transmission losses. (2) includes steady-state nodal power balance constraints. (3) includes apparent/real power/reactive power/current flow constraints on lines. (4) includes generator capacity or voltage magnitude constraints.
+\end{frame}
+
+\begin{frame}{Dynamic Transient Constraints: (5)--(7)}
+  % \[
+  % \dot{x} = f(x, y, p), \qquad x(t_0) = I_x^0(p)
+  % \]
+  Eq. (5):
+  \begin{itemize}
+    \item $x$: state variables (rotor angles, speeds, control states). Initial states computed from steady-state solution corresponding to control variables $p$.
+    \item $f(x,y,p)$: system dynamics — e.g., generator swing equations, Telegrapher equations, or capacitor/inductor transient models.
+    \item $y$: dependent variables (nodal voltages magnitude and angle, line currents, etc.).
+    \item $p$: control variables (generator setpoints, tap settings, shunt positions, etc.)
+    \item Enforce the physics of transient after a disturbance.
+  \end{itemize}
+
+  % \[
+  % 0 = g(x, y, p), \qquad y(t_0) = I_y^0(p)
+  % \]
+  Eq. (6): embed dynamics into steady-state constraints.
+  \begin{itemize}
+    \item $g(x,y,p)$: Same physical laws as (2) e.g. KCL but now applied at every instant $t$'s states $x(t), y(t)$ to extend to the dynamics.
+    % \item $h(x(t),y(t)) \le 0$: Operational constraints need to be respected for the entire trajectory $x(t), y(t)$.
+  \end{itemize}
+\end{frame}
+
+\begin{frame}{Dynamic and Transient Constraints: (7)}
+
+  \textbf{(7) Transient limits:}
+  \[
+  h(x(t), y(t)) \le 0, \quad \forall t
+  \]
+  \begin{itemize}
+    \item Enforce time-domain operating limits during the transient response.
+    \item Examples:
+      \begin{itemize}
+        \item Bus voltage magnitudes stay within limits.
+        \item Rotor angle differences remain stable.
+        \item Line thermal limits respected.
+      \end{itemize}
+    \item Ensures \textbf{transient stability} under all time steps during instability.
+  \end{itemize}
+
+\end{frame}
+
+% ======================================================
+\begin{frame}{Solution Methods for TSC-OPF}
+
+  \textbf{Indirect (variational) Methods:}
+  \begin{itemize}
+    \item Based on Pontryagin's Maximum Principle.
+    \item Replace the differential equations of dynamics with inequalities that approximate the behavior in steady-state by linearizing into static conditions.
+    \item Examples: energy or Lyapunov functions or impose stability margin constraints on linearized Jacobian.
+  \end{itemize}
+  Instead of having to integrate over time, you get back a static nonlinear optimization problem that can be solved using standard solvers.
+  \textbf{In practice:}
+  \begin{itemize}
+    \item Mainly used for planning/screening/preventive security dispatch due to loss in accuracy.
+    \item Not sufficient to guarantee transient stability under large disturbances.
+    \item Validation still relies on time-domain (direct) simulation.
+  \end{itemize}
+\end{frame}
+
+% ======================================================
+\begin{frame}{Direct Method: Simultaneous Discretization/Constraint Transcription}
+
+  \textbf{Main idea:} Converts the time-dependent diff. eq. into a finite set of algebraic constraints before optimization so transient stabilitysimulator can be reused.
+
+  \textbf{Discretization approach:}
+  \begin{itemize}
+    \item The simulation horizon is divided into multiple time steps $t_0, t_1, \dots, t_N$.
+    \item The diff. eq. is approximated at each step using numerical integration like implicit trapezoidal rule:
+          \[
+          x(t) - \frac{\Delta t}{2} f(x(t), y(t), p)
+          - x(t-\Delta t)
+          - \frac{\Delta t}{2} f(x(t-\Delta t), y(t-\Delta t), p) = 0.
+          \]
+  \end{itemize}
+
+  \textbf{Pros and Cons:}
+  \begin{itemize}
+    \item Produces one large-scale NLP that enforces the dynamics exactly for the entire trajectory (within discretization accuracy).
+    \item Computationally demanding due to the high dimensionality of variables and constraints from discretization. Accurate gradients is expensive from trajectory sensitivivity analysis. Hessians often approximated using BFGS updates.
+  \end{itemize}
+
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{Direct Method: Multiple Shooting}
+  The multiple shooting method divides the simulation horizon into smaller time segments
+  $\,[t_0,t_1], [t_1,t_2], \dots, [t_{N-1},t_N]$.
+  \begin{itemize}
+    \item Each segment starts from its own initial condition
+          $x_i(t_i)$ and is integrated forward using the diff. eq.
+          $\dot{x}=f(x,y,p),\, 0=g(x,y,p)$
+          to obtain the predicted final state $\hat{x}_i(t_{i+1})$.
+    \item Constraint to ensure continuity between segments:
+          \[
+          x_{i+1}(t_{i+1}) = \hat{x}_i(t_{i+1}),
+          \]
+  \end{itemize}
+
+  \textbf{Constraint form:}
+  \[
+  s_i = S_i(s_{i-1},p), \quad \forall i \in 1,\dots,N_S,
+  \]
+  where $S_i(\cdot)$ is an implicit function that can be numerically integrated over segment $i$. \\
+  Pros: Each segment can be integrated independently, so the Jacobian of the resulting NLP is better conditioned because the coupling is limited to adjacent segments instead of the entire trajectory. This segmentation improves numerical stability and allows for more efficient large-scale computation.
+
+\end{frame}
+
+% ======================================================
+\begin{frame}{Trajectory Sensitivity Analysis of TSC-OPF}
+
+  \textbf{Purpose:} Quantify how system variables $x(t),y(t)$ changes with respect to small variations in control variables $p$ or intial conditions. Recall that with different control settings $p$, the entire transient trajectory changes and we would need to simulate the dynamics again to see what happens. This is expensive. Sensitivity analysis tells you how the trajectory and stability margins change with small changes in $p: \frac{\partial x}{\partial p}$ without running a new full simulation for every small perturbation.
+
+  \textbf{Relation to numerical methods:}
+  \begin{itemize}
+    \item These sensitivities provide gradient information for solvers, which is used for both multiple shooting and constraint transcription.
+    % \item Complement the direct methods (discretization, shooting) by enabling efficient gradient-based updates of $p$.
+  \end{itemize}
+
+\end{frame}
+
+% ======================================================
+\begin{frame}{Forward Sensitivity Method}
+  \begin{itemize}
+    \item Computed by performing a forward integration of the sensitivity equations alongside the original diff. eq. system.
+    \item Efficient when the number of parameters is small.
+    \item The computational complexity is $\mathcal{O}(n_p)$, since $n_p$ forward integrations are required to compute the sensitivities.
+  \end{itemize}
+
+  \textbf{Formulation:}
+  For the original diff. eq. system:
+          \[
+          F(\dot{x}(t),\, x(t),\, p) = 0.
+          \]
+  The corresponding variational diff. eq. for the sensitivities is:
+          \[
+          \frac{\partial F}{\partial \dot{x}}\,\dot{s}
+          + \frac{\partial F}{\partial x}\,s
+          + \frac{\partial F}{\partial p} = 0,
+          \]
+          with initial condition
+          \[
+          s(t_0) = \frac{\partial x(t_0)}{\partial p}.
+          \]
+
+\end{frame}
+
+\begin{frame}{Forward Sensitivity Method}
+  \begin{itemize}
+    \item Each parameter $p_i$ perturbs the system differently.
+    \item Forward method tracks this by integrating a new "copy" of the linearized system, which shares the same Jacobian as the original DAE.
+  \end{itemize}
+
+  \textbf{Pros and cons:}
+  \begin{itemize}
+    \item \textbf{Pros:} Simple and accurate, efficient when number of parameters is small.
+    \item \textbf{Cons:} Computational cost grows linearly with number of parameters.
+  \end{itemize}
+
+  \end{frame}
+
+% ======================================================
+\begin{frame}{Adjoint Method}
+  Efficient when the number of parameters is large. This only needs one backward integration in time to compute the sensitivities.
+  Formulation:
+  \begin{itemize}
+    \item Consider \[
+        G(p) = \int_{t_0}^{T} g(x, p)\,dt.
+        \]
+    \item We want the gradient given by:
+      \[
+        \frac{\partial G}{\partial p}
+        =
+        \int_{t_0}^{T}
+        \left(
+        \frac{\partial g}{\partial p}
+        - \lambda^{\mathsf{T}} \frac{\partial F}{\partial p}
+        \right) dt,
+        \]
+    \item The adjoint multiplier $\lambda(t)$ satisfies
+      \[
+        \dot{\lambda}
+        =
+        -\,\frac{\partial g}{\partial x}
+        + \lambda^{\mathsf{T}}\frac{\partial F}{\partial x}.
+      \]
+    where $\lambda(T)=0$.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}{Adjoint Method and wrapping up}
+  \textbf{Pros:}
+  \begin{itemize}
+    \item Efficient when the number of parameters is large.
+    \item The gradient is obtained in one pass.
+  \end{itemize}
+
+  \textbf{Cons:}
+  \begin{itemize}
+    \item Higher memory cost due to storage of trajectory data and state variables in backward integration.
+  \end{itemize}
+  One can also obtain the gradients by finite differences, which is based on truncated Taylor series expansion.
+
+  \end{frame}
+
+
+
+
+% --- Power System History and Modern Power System
+\begin{frame}{Power System History and Modern Power System}
+\begin{block}{The Fuel Era (20th Century)}
+Electricity produced mostly by coal, gas, nuclear. Generators are large synchronous machines with big spinning masses. Stable and predictable. Inertia from these machines naturally provides flexibility infrequency stability. Grid ran reliably for decades.
+\end{block}
+\begin{block}{The Renewable Era (2000s--Today)}
+Wind expanded in 2000s, solar PV took off after 2010. Renewables now 20--40\%+ of real-time demand in some regions; dynamics changed.
+\end{block}
+\end{frame}
+
+% --- Synchronous Generators: How electricity is generated
+\begin{frame}{Synchronous Generators: How electricity is generated}
+\begin{columns}[T,onlytextwidth]
+\column{0.5\textwidth}
+\begin{itemize}
+  \item Rotor (heavy spinning mass) driven by turbines (steam, gas, hydro)
+  \item Faraday's law: changing magnetic field induces voltage in stator
+  \item Called "synchronous" because the rotor spins in sync with the grid's frequency (50 Hz in Europe, 60 Hz in North America)
+  \item If the grid frequency is 60 Hz, the rotor turns at a speed locked to 60 Hz
+\end{itemize}
+\column{0.5\textwidth}
+\begin{figure}
+\centering
+\includegraphics[width=0.9\textwidth]{images/syncgen.png}
+\caption{Generator Cross-Section}
+\end{figure}
+\end{columns}
+\end{frame}
+
+% --- Spinning Mass in a Generator
+\begin{frame}{Spinning Mass in a Generator}
+\begin{itemize}
+  \item Inside a synchronous generator is a rotor — basically a giant heavy wheel of steel and copper (tens or hundreds of tons)
+  \item Turbines (steam from coal/nuclear, gas combustion, or flowing water in hydro) push on the rotor to make it spin
+  \item That rotor's mechanical rotation creates a rotating magnetic field, according to Faraday's law of induction, a changing magnetic field induces an alternating voltage in the stator windings
+  \item This is why the system is predictable: we know how to control these rotors. Put in more fuel to generate more power
+\end{itemize}
+\end{frame}
+
+% --- Generator Frequency Formula
+\begin{frame}{Generator Frequency Formula}
+\textbf{Frequency Formula:}
+\begin{align}
+f = \frac{N \times \text{RPM}}{120}
+\end{align}
+where $N$ = number of poles, RPM = rotor speed
+
+\textbf{Examples:}
+\begin{itemize}
+  \item 2 poles, 3600 RPM → 60 Hz
+  \item 4 poles, 1800 RPM → 60 Hz
+\end{itemize}
+
+\textbf{Why 50/60 Hz?} Historical choices: early engineers (Westinghouse, Edison, etc.) picked values that balanced motor performance and generator design. Once infrastructure was built, it became a standard.
+\end{frame}
+
+% --- Kinetic Energy
+\begin{frame}{Kinetic Energy}
+\textbf{The rotor has stored kinetic energy:}
+\begin{align}
+E_{\text{kinetic}} = \frac{1}{2} J \omega^2
+\end{align}
+where $J$ = moment of inertia (depends on mass + geometry), $\omega$ = rotor speed
+
+\textbf{If demand suddenly exceeds supply (a generator trips):}
+\begin{itemize}
+  \item That small slow down of a rotor releases some of its stored kinetic energy into the grid instantly
+  \item But because there are so many large spinning machines, the grid behaves like a conveyor belt with so many wheels tied together. If one slows a bit, the others share the imbalance, so frequency changes slowly because the system has a huge inertia
+  \item This gives time for operators to fix things
+  \item Even if there are imbalances, things wouldn't get out of hand fast since there are so many other generators. They can share the load so each only needs to spin a little faster to keep up the frequency
+\end{itemize}
+\end{frame}
+
+% --- Renewables and Inverters
+\begin{frame}{Inverters - Renewables}
+\textbf{Today, renewables can supply 20–40\%+ of real-time demand.}
+Cleaner, cheaper, more sustainable — but dynamics changed.
+
+Most renewables (solar PV, modern wind turbines, batteries) produce DC electricity (direct current).
+
+\textbf{What's the problem of DC power?}
+\begin{itemize}
+  \item It only has amplitude (magnitude of voltage/current)
+  \item No phase, no frequency
+  \item But recall AC current has the waveform (that's why we have leading/lagging current which controls reactive power and power factor correction)
+  \item We need amplitude, frequency, and phase to describe AC current
+  \item That's why we need inverters, power electronics device that synthesizes sinusoidal AC from DC
+\end{itemize}
+\end{frame}
+
+% --- Inverter Operation (continued)
+\begin{frame}{Inverter Operation}
+\textbf{How it operates?}
+\begin{enumerate}
+  \item Takes DC input from solar panels, wind turbine
+  \item Use power electronics that switches thousands of time per second to synthesize an AC waveform
+  \item Note that even the output is a smooth sinusoidal AC waveform, inside the inverter the switches turn the DC voltage on and off thousands of times per second (typical switching frequency = 2–20 kHz, sometimes higher) to approximate that smooth waveform
+  \item So even though the output is continuous, it's created by on/off pulses internally
+  \item The inverter synchronizes the AC output to the grid's frequency and phase. If grid is 60 Hz → inverter outputs 60 Hz. If grid is 59.9 Hz (after a disturbance) → inverter follows 59.9 Hz.
+  \item The voltage, current, and power factor are controlled through the programmed algorithms
+\end{enumerate}
+\end{frame}
+
+% --- Inverter Control Modes
+\begin{frame}{Inverter Control Modes}
+\textbf{In summary, the inverters are programmable devices by operators with control algorithms to act like generators. They wait for a signal from a grid so they can be:}
+\begin{itemize}
+  \item \textbf{Grid-following}: track the grid's voltage and frequency → inject current accordingly
+  \item \textbf{Grid-forming}: behave like a voltage source, set their own frequency/voltage reference, and to adjust for power imbalance (some research area I heard of)
+\end{itemize}
+
+They are not really generators - no spinning mass, no inertia, but they use control algorithms to mimic generator behavior.
+\end{frame}
+
+% --- Internal view of inverters (placeholder)
+\begin{frame}{Internal View of Inverters}
+\begin{figure}
+\centering
+\includegraphics[width=0.3\textwidth]{images/inverter.jpg}
+\caption{Internal View of Inverter}
+\end{figure}
+
+\begin{itemize}
+  \item Capacitors and switching components on electronic mainboards (like in computer's motherboard, blue cylinders in upper left corner of the picture)
+  \item Programmable behavior defined by control firmware
+\end{itemize}
+\end{frame}
+
+% --- Problems with inverters
+\begin{frame}{Problems with Inverters}
+\textbf{This is all software-based. You do not have a natural physical property like a spinning rotor and inertia.}
+
+\begin{itemize}
+  \item No big spinning mass directly tied to frequency, so frequency changes much faster after a disturbance
+  \item The device measures grid signal and forces its output to follow
+  \item Unless explicitly programmed, they don't know when the conveyor belt slows down or speeds up (recall the previous analogy)
+  \item Even if they do, they don't have the capacity like big generators
+  \item \textbf{This is the key part:} they are just switching circuits with no agency to ramp up the power output (nature of renewables is their output is often independent of human control). Output is limited by weather and energy availability (sun/wind).
+  \item Renewables also locate in remote areas with long transmission lines, and the nature of their unpredictability (weather), makes their generation highly uncertain
+\end{itemize}
+
+\textbf{We will build up to inverter control after we cover the generator swing equations.}
+\end{frame}
+
+% --- Generator Swing Equations
+\begin{frame}{Newton's Second Law}
+\textbf{Linear Version:}
+\begin{align}
+F = ma
+\end{align}
+where $F$ = force (N), $m$ = mass (kg), $a$ = acceleration (m/s²)
+
+This says: imbalance of forces → acceleration of mass.
+
+\textbf{Rotational Version:}
+For a rotating body (like a generator rotor), the equation is:
+\begin{align}
+T = J\alpha
+\end{align}
+where $T$ = torque (N·m), $J$ = moment of inertia (kg·m²), the rotational mass. $\alpha$ = angular acceleration (rad/s²)
+
+This says: imbalance of torques → rotor accelerates or decelerates.
+Think torque as the angular equivalent of force.
+\end{frame}
+
+% --- Applied to Generator Dynamics
+\begin{frame}{Applied to Generator Dynamics}
+\textbf{Two main torques act on a synchronous generator's rotor:}
+\begin{itemize}
+  \item $T_m$: mechanical torque from the turbine (steam, gas, water) pushing the rotor
+  \item $T_e$: electromagnetic torque from the stator's magnetic field resisting the rotor (this is the grid "pulling" power out)
+\end{itemize}
+
+\textbf{Torque imbalance:}
+\begin{align}
+J\alpha = T_m - T_e
+\end{align}
+where $\omega$: angular speed of rotor (rad/s), $\alpha = \dot{\omega}$: angular acceleration (rad/s²)
+
+\textbf{If $T_m > T_e$:} rotor accelerates
+
+\textbf{If $T_m < T_e$:} rotor slows down
+
+\textbf{If equal:} steady rotation
+\end{frame}
+
+% --- From Torque to Power
+\begin{frame}{From Torque to Power}
+Recall $P = Fv$ (mechanical power is generated by a force $F$ on a body moving at a velocity $v$). In rotational systems, power is related by torque and angular speed (you can think about it as rotational equivalent as force)
+
+\textbf{Power = torque × speed:}
+\begin{align}
+P = T \cdot \omega
+\end{align}
+
+So:
+\begin{itemize}
+  \item Mechanical power input: $P_m = T_m \cdot \omega$
+  \item Electrical power output: $P_e = T_e \cdot \omega$
+\end{itemize}
+
+Multiply the torque balance by $\omega$:
+\begin{align}
+J\omega\dot{\omega} = P_m - P_e
+\end{align}
+
+This relates how fast the mass is spinning ($\omega$) to the imbalance of power input (generation) and power withdrawal (load + losses).
+\end{frame}
+
+% --- From Torque to Power (Continued)
+\begin{frame}{From Torque to Power (Continued)}
+But recall that generators operate close to system frequency, so the generators spin at, i.e. the angular velocity is close to that 60 Hz constant. Since the variations are mostly tiny, we can define inertia constant $M = J\omega$
+
+And we get the generator swing equation:
+\begin{align}
+M\dot{\omega} = P_m - P_e
+\end{align}
+
+\textbf{Interpretation:}
+\begin{itemize}
+  \item $M$: inertia constant, measures how much the rotor resists speed change (bigger mass → slower frequency drift)
+  \item $P_m$: mechanical input power (from fuel, water, steam)
+  \item $P_e$: electrical output power delivered to the grid
+\end{itemize}
+\end{frame}
+
+% --- Per-Unit Generator Swing Equation
+\begin{frame}{Per-Unit Generator Swing Equation}
+\textbf{Per-unit versions:}
+Power are often defined at per unit, so we have:
+\begin{align}
+\frac{J\omega_s}{S_{\text{base}}} \dot{\omega} = (P_m - P_e)_{\text{pu}}
+\end{align}
+
+There are sources that define $H = \frac{1}{2}\frac{J\omega_s^2}{S_{\text{base}}} \Rightarrow \frac{2H}{\omega_s} = \frac{J\omega_s}{S_{\text{base}}}$
+
+$H \triangleq \frac{E_k}{S_{\text{base}}} = \frac{\frac{1}{2}J\omega_s^2}{S_{\text{base}}}$ comes from kinetic energy
+
+\vspace{0.5cm}
+So we have per unit swing:
+\begin{align}
+\frac{2H}{\omega_s} \dot{\omega} = (P_m - P_e)_{\text{pu}}
+\end{align}
+\end{frame}
+
+% --- Damping and Advanced Forms
+\begin{frame}{Damping and Advanced Forms}
+Some also add damping:
+\begin{align}
+M\dot{\omega} + D(\omega - \omega_s) = P_m - P_e
+\end{align}
+as penalties to frequency deviation. $D$ captures any restoring force, or frictions and losses
+
+We can also write the per-unit acceleration form:
+\begin{align}
+2H \dot{\omega}_{\text{pu}} = (P_m - P_e)_{\text{pu}}
+\end{align}
+\end{frame}
+
+% --- Why this matters
+\begin{frame}{Why This Matters}
+\begin{itemize}
+  \item Stability depends on balancing generation and demand
+  \item Inertia slows down changes in frequency, buying time for control actions
+\end{itemize}
+
+\textbf{Power imbalance effects:}
+\begin{itemize}
+  \item If $P_m > P_e$: extra power → rotor speeds up → frequency rises
+  \item If $P_m < P_e$: shortage → rotor slows → frequency falls
+\end{itemize}
+
+\textbf{Inertia $M$ slows down how fast this happens.}
+\begin{itemize}
+  \item With many generators, $M$ is big. For a given imbalance, frequency drifts slowly → grid is flexible
+  \item With fewer machines (more renewables), $M$ is smaller → frequency changes faster → grid is fragile
+\end{itemize}
+
+This is shown by writing the equation as $\dot{\omega} = \frac{P_m - P_e}{M}$. For a big $M$, the angular acceleration (frequency) is smaller when there is an imbalance.
+\end{frame}
+
+% --- How does it relate to Inverters
+\begin{frame}{How Does It Relate to Inverters?}
+We previously discussed grid-following inverters.
+
+\textbf{Its control law works as:}
+\begin{enumerate}
+  \item Measure voltage and frequency of the grid
+  \item Gets desired power output from an operator or solved from a market
+  \item Adjust its AC current output to deliver the desired power output at voltage and frequency GIVEN by the grid
+\end{enumerate}
+
+\textbf{What's the problem with it?} No control over other parameters like voltage and frequency. The power output is only stable if the rest of the grid is stable.
+\end{frame}
+
+% --- Grid-forming Inverters
+\begin{frame}{Grid-forming Inverters}
+\begin{itemize}
+  \item The inverter doesn't blindly follow the grid frequency, it defines its own reference voltage and frequency like a voltage source
+  \item Let the frequency shift slightly to reflect power imbalance between the renewable generation and the rest of the grid, so other machines (generators) know to ramp up or down
+  \item Able to define its own frequency is the key for the renewable to behave like a synchronous generator, and we now have the ability to model it in a swing equation by giving it a virtual mass defined by the local frequency
+\end{itemize}
+
+We can now emulate synchronous machine behavior via controlling the ``virtual inertia''.
+
+\textbf{Reference:} J. Driesen and K. Visscher, "Virtual synchronous generators," 2008 IEEE Power and Energy Society General Meeting - Conversion and Delivery of Electrical Energy in the 21st Century, Pittsburgh, PA, USA, 2008, pp. 1-3.
+\end{frame}
+
+% --- Grid-Forming Response to Disturbances
+% \begin{frame}{Grid-Forming Response to Disturbances}
+% \textbf{If the system is disturbed (load spike, generator trip):}
+% \begin{itemize}
+%   \item The inverter does not instantly follow the dip like a grid-follower
+%   \item It adjusts frequency slightly in proportion to imbalance, so it behaves as it has inertia
+%   \item This stabilizes the grid frequency, slowing the drop
+% \end{itemize}
+
+% \textbf{If the inverter alone can't cover the imbalance:}
+% \begin{itemize}
+%   \item Its frequency will drift a bit away from 60 Hz
+%   \item That frequency deviation is a \emph{signal} to other generators or grid-forming inverters to pick up more power
+%   \item This is exactly how synchronous generators share load via droop control
+% \end{itemize}
+% \end{frame}
+
+% --- Virtual Inertia Law
+\begin{frame}{Virtual Inertia Law in Grid-Forming Inverter}
+\textbf{Physics is replaced by software:}
+\begin{align}
+M_{\text{virtual}} \dot{\omega} = P_{\text{ref}} - P
+\end{align}
+
+\textbf{Parameters:}
+\begin{itemize}
+  \item $M_{\text{virtual}}$: a tunable parameter by the controller, chosen to represent how fast the inverter responds to frequency changes
+  \item Recall $M = J\omega$. Since we have no physical inertia $J$, the virtual mass is just a modeling choice
+  \item $P_{\text{ref}}$: reference active power dispatch (from operator)
+  \item $P$: measured actual active power delivered
+  \item $\omega$: inverter's internal frequency reference value
+\end{itemize}
+
+\textbf{Effect of $M_{\text{virtual}}$:}
+\begin{itemize}
+  \item A larger $M_{\text{virtual}}$ means the inverter allows its frequency to drift slower, a "heavier" machine
+  \item A smaller $M_{\text{virtual}}$ means the inverter reacts more quickly, a "lighter" machine
+\end{itemize}
+\end{frame}
+
+% --- Virtual Inertia (continued)
+\begin{frame}{Virtual Inertia (continued)}
+\textbf{How it works:}
+\begin{itemize}
+  \item The inverter adjusts its internal frequency reference according to power imbalance
+  \item That frequency reference drives its voltage output, which the grid "sees"
+  \item To the rest of the system, this looks just like a synchronous machine rotor slowing/speeding under imbalance
+\end{itemize}
+
+\begin{itemize}
+  \item There's no heavy rotor. It emulates the inertia behavior of synchronous machines through software control.
+  \item But this is not sustained. It can only hold it until the renewable saturates, which is less than a second since they don't have as much buffer as traditional generators.
+  \item Other problems: semiconductor ratings, thermal limits, hard to tune $M_{\text{virtual}}$, cost, legacy devices, etc.
+\end{itemize}
+
+\textbf{Why this is such a big deal:} renewables can now respond to a grid-wide drop in frequency because it can behave almost like a synchronous generator through control law
+\end{frame}
+
+% --- Droop Control
+\begin{frame}{Grid-following inverters - Droop Control}
+Generators naturally slow down if overloaded, resulting in a drop in frequency (droop). Droop control allows each generator to increase its power output in response, but in proportion to its droop coefficient, so that all generators share the load change fairly.
+
+Grid-forming inverters are programmed with droop control:
+
+\begin{align}
+P = P_{\text{set}} - \frac{1}{K_p} (\omega - \omega_0)
+\end{align}
+where $\omega_0$: nominal frequency, $P_{\text{set}}$: reference power output, $K_p$: droop constant (rad/s per MW or Hz per MW) telling inverter how much to adjust power output when frequency changes. Hence when frequency drops, power will rise.
+
+Overload leads to frequency drop, and power will rise according to the relationship. If frequency rises, power will decrease to maintain the frequency.
+\end{frame}
+
+\begin{frame}{Reactive Power and Voltage Control (Q-V Droop)}
+% \textbf{Reactive Power – Voltage (Q–V Droop)}
+
+Analogous for voltage support:
+\begin{align}
+V = V_0 - K_q (Q - Q_{\text{set}})
+\end{align}
+or
+\begin{align}
+Q = Q_{\text{set}} - \frac{1}{K_q} (V - V_0)
+\end{align}
+
+If reactive demand $\uparrow$ (voltage dips), generator/inverter increases reactive power injection.
+
+\textbf{Two important components of stability:} frequency and voltage. If there are deviations, adjust active and reactive power accordingly
+
+\begin{itemize}
+  \item $1/K_p$ = MW per Hz: "How much active power do I add if frequency drops by 0.1 Hz?"
+  \item $1/K_q$ = Mvar per V → "How much reactive power do I add if voltage drops by 0.01 pu?"
+  % \item $K_p$ and $1/K_p$ both are the frequency-power slope, just in different units. Larger slope means more correction
+\end{itemize}
+\end{frame}
+
+% ======================================================
+\begin{frame}{Dynamic Load Models}
+  \Large
+  Dynamic Load Models
+\end{frame}
+
+\begin{frame}{Steady-State Load Models in ACOPF/DCOPF}
+  In optimal power flow (OPF), all quantities are \emph{time-invariant}. $\dot{x} = 0, t$ does not appear.
+
+  At each load bus:
+  \[
+  P_D = \text{fixed real power demand}, \qquad
+  Q_D = \text{fixed reactive demand}.
+  \]
+
+  These loads can be either:
+  \begin{itemize}
+    \item Constant power: $P_D, Q_D$ are specified numerical values; or
+    \item Voltage-dependent (ZIP) as motors draw different amount current to maintain torque:
+    \[
+    P(V) = P_0 (a_P V^2 + b_P V + c_P), \quad
+    Q(V) = Q_0 (a_Q V^2 + b_Q V + c_Q).
+    \]
+  \end{itemize}
+
+  Power-flow balance:
+  \[
+  P_G - P_D = \text{network losses}, \qquad
+  Q_G - Q_D = 0.
+  \]
+\end{frame}
+
+\begin{frame}{Steady-State Load Models Continued}
+  Interpretation of the above model:
+  \begin{itemize}
+    \item Loads are fixed regardless of system conditions, or at most respond to nodal voltage.
+    \item No memory or dynamics -- they change only between static operating points.
+    \item The OPF represents a single equilibrium snapshot of the system.
+  \end{itemize}
+
+  \textbf{Next:} Dynamic models generalize this by letting $P_D$ and $Q_D$
+  \emph{evolve over time} with voltage and frequency. The grid's sink can be dynamic too even though we tend to think about it as a fixed parameter.
+\end{frame}
+
+\begin{frame}{Dynamic Load Models - Induction Motor Model}
+  In dynamic models, the active and reactive power is represented as a function of the past and present voltage magnitude and frequency of the load bus. This type of model is commonly derived from the equivalent circuit of an induction motor.
+
+  Most real-world loads (fans, pumps, compressors) are induction motors.
+  Their active/reactive power do not change instantaneously with voltage change but rather dynamically by changing the motor's rotor speed $\omega_r$ to maintain torque. Hence, the power consumption depends on both voltage and frequency.
+  \[
+  P_d = f_P(V, \omega_r), \qquad Q_d = f_Q(V, \omega_r),
+  \]
+  so the load has internal dynamics, unlike static $P_D, Q_D$ in ACOPF.
+
+\end{frame}
+
+% ======================================================
+\begin{frame}{Rotor Dynamics}
+
+  \textbf{Slip:}
+  \[
+  s = \frac{\omega_s - \omega_r}{\omega_s},
+  \]
+  where
+  \begin{itemize}
+    \item $\omega_s$: synchronous electrical speed ($2\pi f_s$), set by system frequency,
+    \item $\omega_r$: mechanical rotor speed (frequency at the load).
+  \end{itemize}
+
+  \textbf{Operating regions:}
+  \begin{itemize}
+    \item $s = 0$: rotor synchronous with system frequency $\rightarrow$ no induced torque.
+    \item $0 < s < 1$: normal operation. Rotor is slightly slower than the rotating field $\rightarrow$ induces current $\rightarrow$ produces torque.
+    \item $s \to 1$: stall. Rotor stopped, max current, high losses.
+  \end{itemize}
+
+  \textbf{Mechanical dynamics (sign flip if you differentiate w.r.t. slip):}
+\[
+J\frac{d\omega_r}{dt} = T_e(V,\omega_r) - T_m
+\quad\Longleftrightarrow\quad
+J\,\omega_s\,\frac{ds}{dt} = T_m - T_e(V,s).
+\]
+\end{frame}
+
+\begin{frame}{Continued}
+  \textbf{Variable definitions:}
+\begin{itemize}
+  \item $J$: rotor inertia (kg·m$^2$),
+  \item $\omega_r$: rotor mechanical speed/frequency (rad/s),
+  \item $T_e$: electromagnetic torque (depends on bus voltage $V$, frequency $\omega_s$ (slip formulation), or $\omega_r$ (standard formulation)),
+  \item $T_m$: mechanical load torque.
+\end{itemize}
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{Example: Induction Motor Response During a Voltage Sag}
+
+  \textbf{Sequence of events:}
+
+  \begin{enumerate}
+    \item \textbf{Voltage drop:} $V$ suddenly decreases.
+    \item \textbf{Torque imbalance:} Electromagnetic torque $T_e(V,\omega_r)$
+          falls below mechanical torque $T_m$.
+    \item \textbf{Rotor slowdown:} $\omega_r$ decreases $\Rightarrow$ slip $s$ increases.
+    \item \textbf{Increased current and VAR demand:}
+          The motor draws more current to restore torque, which further depresses voltage.
+    \item \textbf{Possible stalling:} If $V$ remains low, the motor stalls —
+          reactive power skyrockets $\Rightarrow$ voltage collapse.
+  \end{enumerate}
+
+  IM Modeling is key to capture this nonlinear instability mechanism.
+
+  % \textbf{Interpretation:}
+  % \begin{itemize}
+  %   \item Positive feedback loop: $V\downarrow \Rightarrow T_e\downarrow \Rightarrow s\uparrow
+  %         \Rightarrow Q\uparrow \Rightarrow V\downarrow$.
+  %   \item Accurate IM modeling is essential to capture this nonlinear instability mechanism.
+  % \end{itemize}
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{How TSC-OPF Prevents Motor Stalling and Voltage Collapse}
+  \textbf{In TSC-OPF, dynamics and limits are enforced directly:}
+  \[
+  \dot{x} = f(x, y, p), \qquad 0 = g(x, y, p), \qquad h(x(t), y(t)) \le 0, \;\forall t.
+  \]
+  \textbf{Dynamic states $x$:}
+  \begin{itemize}
+    \item Induction motor slip $s$, generator rotor angles, inverter controls, etc.
+    \item Their evolution $f(x,y,p)$ describes how voltages and speeds change after a disturbance.
+    \item Dynamic constraints ensure stall condition is not reached.
+  \end{itemize}
+
+  \textbf{Constraint function $h(x(t),y(t))$:}
+  \begin{itemize}
+    \item Enforces time-domain limits such as
+      \[
+      V_i(t) \ge V_{\min}, \quad \forall t \in [0, T_{\text{rec}}],
+      \]
+      where $T_{\text{rec}}$ is the recovery time. This ensures bus voltages remain within safe recovery bounds during the entire horizon after a disturbance.
+    \item Prevents continued voltage sag that would drive $T_e(V,s)$ down and cause stalling.
+  \end{itemize}
+  \end{frame}
+
+\begin{frame}{Wrap up}
+  Controls $p$ are chosen so that f remains stable under disturbances, and the chain of events above is prevented since motor and network dynamics are embedded in $f,g,h$.
+
+  This model is typically used when there's a fast transient or stalling, and the time scale is in milliseconds to second. Useful for short-term voltage stability and transient studies.
+\end{frame}
+
+% ======================================================
+\begin{frame}{Exponential Recovery Load (ERL): Motivation and Concept}
+
+  \textbf{Goal:} Represent aggregate load behavior during voltage recovery after a disturbance.
+
+  \textbf{Empirical Observation:}
+  \begin{itemize}
+    \item When voltage dips, total active and reactive loads drop immediately.
+    \item Loads such as motor controls and HVAC systems \textbf{slowly restore} their power draw as voltage recovers.
+    \item The recovery follows an \textbf{exponential time pattern}, not an instantaneous jump.
+  \end{itemize}
+
+  \textbf{Idea:}
+  Introduce internal states that describe this gradual return:
+  \[
+  P_d(t) = f_P(V(t),x_p(t)), \qquad Q_d(t) = f_Q(V(t),x_q(t)).
+  \]
+  where $x_p(t)$ and $x_q(t)$ are the internal states of the active and reactive load.
+
+  These states evolve according to first-order differential equations, capturing the "memory" of how far the load has recovered.
+  \end{frame}
+
+% ======================================================
+\begin{frame}{Adaptive Exponential Recovery Load (ERL) Model}
+
+  \textbf{Mathematical Form:}
+  \[
+  \begin{aligned}
+  T_p \frac{dx_p}{dt} &= -x_p\!\left(\frac{V}{V_0}\right)^{N_{ps}}
+                       + P_0\!\left(\frac{V}{V_0}\right)^{N_{pt}},\\[3pt]
+  P_d &= x_p\!\left(\frac{V}{V_0}\right)^{N_{pt}},\\[6pt]
+  T_q \frac{dx_q}{dt} &= -x_q\!\left(\frac{V}{V_0}\right)^{N_{qs}}
+                       + Q_0\!\left(\frac{V}{V_0}\right)^{N_{qt}},\\[3pt]
+  Q_d &= x_q\!\left(\frac{V}{V_0}\right)^{N_{qt}}.
+  \end{aligned}
+  \]
+
+  \textbf{Parameters:}
+  \begin{itemize}
+    \item $x_p, x_q$: internal recovery states (how much of the load has recovered).
+    \item $T_p, T_q$: time constants — larger values $\Rightarrow$ slower recovery.
+  \end{itemize}
+\end{frame}
+\begin{frame}{Continued}
+  \begin{itemize}
+    \item $P_0, Q_0$: nominal power withdrawals at reference voltage $V_0$.
+    \item $N_{pt}, N_{qt}$: transient exponents (immediate voltage sensitivity). How sharply load power reacts immediately when voltage changes (the short-term dip).
+    \item $N_{ps}, N_{qs}$: steady-state exponents (long-term voltage dependence). How much the load power changes in the long term after voltage settles to a new level.
+  \end{itemize}
+
+  \textbf{Interpretation:}
+  \begin{itemize}
+    \item After a voltage dip, power first follows the transient curve, then recovers exponentially toward the steady-state curve.
+    \item When $V$ is weak, the recovery term
+          $(V/V_0)^{N_{ps}}$ slows the rate of change — recovery stalls under low voltage.
+    \item Recovery speed and power response both scale with voltage and almost halts under deep voltage sag.
+  \end{itemize}
+  \end{frame}
+
+
+  % ======================================================
+\begin{frame}{Standard vs. Adaptive ERL Models}
+
+  \textbf{Standard ERL model:}
+  \[
+  \begin{aligned}
+  T_p \frac{dx_p}{dt} &= -x_p + P_0\!\left[\!\left(\frac{V}{V_0}\right)^{N_{ps}} - \left(\frac{V}{V_0}\right)^{N_{pt}}\!\right],\\
+  P_d &= x_p + P_0\!\left(\frac{V}{V_0}\right)^{N_{pt}}.
+  \end{aligned}
+  \]
+
+  \textbf{Key difference:}
+  \begin{itemize}
+    \item In the \textbf{standard} model, $dx_p/dt$ depends on $V$ only through the voltage-dependent driving term. The state $x_p$ recovers constantly—independent of voltage.
+    \item In the \textbf{adaptive} model, recovery slows when $V$ is low:the term $(V/V_0)^{N_{ps}}$ reduces the rate of change. The two differ in how strongly the voltage affects recovery speed.
+  \end{itemize}
+
+  \textbf{Physical interpretation:}
+  \begin{itemize}
+    \item Standard ERL: suitable for moderate voltage dips.
+    \item Adaptive ERL: more realistic for deep voltage sags.
+  \end{itemize}
+
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{ERL Parameters}
+  \begin{itemize}
+    \item Parameters $(T_p, T_q, N_{ps}, N_{pt}, N_{qs}, N_{qt})$
+          are fitted empirically from from measurements of load recovery after voltage disturbances.
+    \item They are not linked to physical machine constants,
+          but to observed aggregate behavior of customer loads.
+  \end{itemize}
+
+  \textbf{Compared to IM Model:}
+  \begin{itemize}
+    \item Models \textbf{voltage-driven recovery} of active/reactive power demand,
+          not frequency-driven mechanical motion.
+    \item Represents the slower phase of system response
+          (seconds to minutes) vs. fast electromechanical transients.
+  \end{itemize}
+
+  % \textbf{Dynamic enforcement:}
+  % \begin{itemize}
+  %   \item The differential equations ensure $P_d(t), Q_d(t)$ follow
+  %         realistic \textbf{transient trajectories}, not step changes.
+  %   \item In simulation or optimization, the states $x_p,x_q$
+  %         evolve continuously according to these recovery laws.
+  % \end{itemize}
+
+  \textbf{Steady-state check:}
+  Setting $\dot{x}_p=\dot{x}_q=0$ gives
+  $P_d=P_0(V/V_0)^{N_{ps}}$, $Q_d=Q_0(V/V_0)^{N_{qs}}$,
+  so ERL naturally reduces to a static voltage-dependent load, showing that when dynamics died out, the model reduces to a steady-state load.
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{ERL in TSC-OPF and Contrast with Induction Motor Model}
+
+  \textbf{TSC-OPF representation:}
+  \[
+  \dot{x} = f(x,y,p), \qquad 0 = g(x,y,p), \qquad h(x(t),y(t)) \le 0.
+  \]
+
+  \begin{itemize}
+    \item ERL contributes its states $x_p,x_q$ to $x$,
+          with recovery dynamics embedded in $f(x,y,p)$.
+    \item $P_d(V,x_p), Q_d(V,x_q)$ enter the algebraic equations $g(x,y,p)$
+          for power balance at each bus.
+    \item Voltage-recovery limits in $h(x(t),y(t))$ ensure $V_i(t)\!\ge\!V_{\min}$
+          throughout the recovery window $[0,T_{\text{rec}}]$.
+  \end{itemize}
+
+  \textbf{Contrast with IM model:}
+  \begin{itemize}
+    \item \textbf{Induction Motor (IM):}
+          physics-based; state $s=(\omega_s-\omega_r)/\omega_s$;
+          captures fast electromechanical and frequency-coupled transients (0.1–2 s).
+    \item \textbf{ERL:}
+          empirical; states $x_p,x_q$; captures slow, voltage-driven recovery (1–60 s).
+  \end{itemize}
+  \end{frame}
+
+% ======================================================
+\begin{frame}{Why We Go Beyond Steady-State OPF}
+
+  \textbf{The bigger picture:}
+  \begin{itemize}
+    \item Power systems are not static networks — they are \textbf{dynamic systems.}
+    \item After every change — a fault, switching event, or sudden load or generation shift — voltages, currents, and frequencies evolve continuously before settling.
+    \item Understanding and controlling these dynamics is essential for keeping the grid stable, secure, and resilient.
+  \end{itemize}
+  \end{frame}
+
+  % ======================================================
+\begin{frame}{Four Building Blocks of System Dynamics}
+
+  \textbf{Four building blocks of system dynamics:}
+  \begin{itemize}
+    \item \textbf{Transients:} capture the immediate electromagnetic wave response
+          that propagates through the network.
+    \item \textbf{Generator swing equations:} describe how machines adjust speed and angle
+          to balance mechanical and electrical power.
+    \item \textbf{Inverters:} the new generation interface that emulates inertia and voltage support with renewables.
+    \item \textbf{Dynamic loads:} model how real demand recovers and interacts with voltage and frequency.
+  \end{itemize}
+\end{frame}
+
+  % ======================================================
+\begin{frame}{Why We Need Dynamic Optimization (TSC-OPF)}
+  \textbf{Why we need dynamic optimization (TSC-OPF):}
+  \begin{itemize}
+    \item Steady-state OPF finds an economical operating point \emph{only at equilibrium.}
+    \item Transient Stability-Constrained OPF ensures that,
+          even during those dynamic transitions,
+          voltages remain safe, machines stay synchronized,
+          and inverters and loads respond smoothly.
+  \end{itemize}
+
+  % \textbf{In short:}
+  % \[
+  % \text{Steady-state OPF ensures economy; TSC-OPF ensures security and survivability.}
+  % \]
+  \end{frame}
+
+
+\end{document}
