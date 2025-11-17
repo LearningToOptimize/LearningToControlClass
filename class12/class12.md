@@ -108,8 +108,7 @@ Let:
 - ‎$\mathcal X$ and $\mathcal Y$ be separable Banach spaces, and let $x\in K\subset\mathcal X$, with $K$ compact.
 - ‎$\mathcal G$ (the operator that we're trying to approximate) be continuous.
 - ‎$\varphi_j:\mathbb R^n \times \Theta \rightarrow \mathbb R^m$ be multiple neural networks.
-- ‎$\xi_1,\text{...},\xi_n$ be the PCA basis functions of the input space $\mathcal X$.
-	- ‎The operator $K_\mathcal X$ for a given $x\in \mathcal X$ would then be $K_\mathcal X(x) :=\mathrm Lx = \{\langle\xi_j,x\rangle\}_j$.
+- ‎$\xi_1,\text{...},\xi_n$ be the PCA basis functions of the input space $\mathcal X$. The operator $K_\mathcal X$ for a given $x\in \mathcal X$ would then be $K_\mathcal X(x) :=\mathrm Lx = \{\langle\xi_j,x\rangle\}_j$.
 - ‎$\psi_1,\text{...},\psi_m$ be the PCA basis functions of the output space $\mathcal Y$.
 
 The final approximation $\mathcal G^\dagger_{\text{PCA}}:\mathcal X \times \Theta \rightarrow \mathcal Y$ is then given by:
@@ -134,8 +133,7 @@ One of the big problems of these approaches is the fact $L_\mathcal Y$ is a line
 
 Let:
 - ‎$\mathcal X$ and $\mathcal Y$ be function spaces over $\Omega \subset \mathbb R^d$
-- ‎$\mathcal G^\dagger$ is the composition of non-linear operators: $\mathcal G^\dagger=S_1\circ \text{...} \circ S_L$ 
-	- ‎In the linear case, as described before, $S_1 = K_\mathcal X$, $S_L = K_\mathcal Y$ and they're connected through multiple $\varphi_j$.
+- ‎$\mathcal G^\dagger$ is the composition of non-linear operators: $\mathcal G^\dagger=S_1\circ \text{...} \circ S_L$. In the linear case, as described before, $S_1 = K_\mathcal X$, $S_L = K_\mathcal Y$ and they're connected through multiple $\varphi_j$.
 The above definition *looks a lot* like the typical definition of NNs, where each one of the $S_l$ is a layer of your NN. And, as we're going to see, it is! At least it is a generalization of the definition of NN to function space.
 [9] proposed to create each one of this $S_l$ as follows:
 ```math
@@ -143,8 +141,7 @@ S_l(a)(x) = \sigma_l\bigg( W_la(x) + b_l + \int_\Omega\mathrm dz \ \kappa_l(x,z)
 ```
 where:
 - ‎$\sigma_l:\mathbb R^k\rightarrow\mathbb R^k$ is the non-linear activation function.
-- ‎$W_l\in\mathbb R^k$ is a term related to a "residual network".
-	- ‎This term is not necessary for convergence, but it's credited to help with convergence speed.
+- ‎$W_l\in\mathbb R^k$ is a term related to a "residual network". This term is not necessary for convergence, but it's credited to help with convergence speed.
 - ‎$b_l\in\mathbb R^k$ is the bias term.
 - ‎$\kappa_l:\Omega\times\Omega\rightarrow\mathbb R^k$ is the kernel function.
 
