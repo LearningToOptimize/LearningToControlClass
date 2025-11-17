@@ -504,6 +504,8 @@ md"""
 ```
 
 **Objective:** minimize operating cost or transmission losses. Eq. (2) includes steady-state nodal power balance constraints. Eq. (3) includes apparent/real power/reactive power/current flow constraints on lines. Eq. (4) includes generator capacity or voltage magnitude constraints.
+
+> 📖 **Reference:** Abhyankar, S., Gross, G., Agrawal, A., & Malik, O. (2017). Solution techniques for transient stability-constrained optimal power flow. IET Generation, Transmission & Distribution, 11(12), 3075–3084. https://doi.org/10.1049/iet-gtd.2017.0345
 """
 
 # ╔═╡ a9f00e8c-205e-45a9-83d4-1dea5b7627c1
@@ -1029,7 +1031,7 @@ Grid-forming inverters represent a more advanced control paradigm that enables r
 
 We can now emulate synchronous machine behavior via controlling the "virtual inertia".
 
-**Reference:** J. Driesen and K. Visscher, "Virtual synchronous generators," 2008 IEEE Power and Energy Society General Meeting - Conversion and Delivery of Electrical Energy in the 21st Century, Pittsburgh, PA, USA, 2008, pp. 1-3.
+> 📖 **Reference:** J. Driesen and K. Visscher, "Virtual synchronous generators," 2008 IEEE Power and Energy Society General Meeting - Conversion and Delivery of Electrical Energy in the 21st Century, Pittsburgh, PA, USA, 2008, pp. 1-3.
 """
 
 # ╔═╡ 75deac76-f89c-4b84-a132-67591177f5dd
