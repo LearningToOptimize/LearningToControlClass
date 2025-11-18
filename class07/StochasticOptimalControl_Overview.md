@@ -1,26 +1,21 @@
-# StochasticOptimalControl.jl
 # Overview of Stochastic Optimal Control (SOC)
-# This file provides a narrative introduction to SOC, its motivation, methods, 
-# and applications, with formulas explained in context.
+#### This file provides an introduction to SOC, its motivation, methods, and applications, with formulas explained in context.
 
-println("Stochastic Optimal Control chapter loaded. This file can be used to understand and implement LQG, Robust, and Unscented control methods.")
-
-println("""
+#
 Stochastic Optimal Control (SOC) is concerned with choosing control actions in systems where both the dynamics and the observations are noisy. 
 In real-world systems, uncertainties arise from sensor noise, model inaccuracies, and external disturbances. 
 SOC explicitly accounts for these uncertainties while attempting to optimize a performance objective.
 
-Consider a discrete-time system with dynamics given by:
-    x_{t+1} = A * x_t + B * u_t + w_t
-where x_t represents the state at time t, u_t is the control input, and w_t is a stochastic disturbance, typically modeled as a zero-mean Gaussian with covariance Q_w. 
+Consider a discrete-time system with dynamics given by: $x_{t+1} = A * x_t + B * u_t + w_t$
+where $x_t$ represents the state at time $t$, $u_t$ is the control input, and $w_t$ is a stochastic disturbance, typically modeled as a zero-mean Gaussian with covariance $Q_w$. 
 
 Measurements are also noisy:
-    y_t = C * x_t + v_t
-where v_t represents measurement noise with covariance R_v. 
+    $y_t = C * x_t + v_t$
+where $v_t$ represents measurement noise with covariance $R_v$. 
 
 The control objective is usually formulated as the minimization of an expected quadratic cost:
-    J = E[ sum_{t=0}^{T-1} (x_t' * Q * x_t + u_t' * R * u_t) ]
-Here, Q and R are weighting matrices that balance the importance of state deviations versus control effort.
+    $J = E[ sum_{t=0}^{T-1} (x_t' * Q * x_t + u_t' * R * u_t) ]$
+Here, $Q$ and $R$ are weighting matrices that balance the importance of state deviations versus control effort.
 
 This framework allows controllers to explicitly trade off performance and robustness, producing actions that are principled and reliable even under uncertainty.
 
@@ -35,6 +30,3 @@ Several stochastic control methods exist, each suited to different types of syst
 The choice of method depends on the system's linearity, noise characteristics, uncertainty magnitude, and performance versus safety requirements. There is no single stochastic control method that is universally optimal; the system context and design priorities must guide the selection.
 
 In this chapter, we will examine four major areas. First, LQG control is introduced to illustrate optimal control for linear systems under Gaussian noise and the separation between estimation and control. Second, Kalman filtering is described as a recursive technique for estimating system states from noisy measurements. Third, robust control methods are discussed, contrasting stochastic and worst-case approaches, and introducing H-infinity methods for handling uncertainties and disturbances. Finally, Unscented Optimal Control and iLQG are presented, showing how sigma-point propagation and iterative trajectory optimization allow SOC methods to handle nonlinear stochastic systems effectively.
-
-This narrative provides the foundation for understanding stochastic optimal control, highlighting the importance of explicitly handling uncertainty and the trade-offs between performance and robustness in practical systems.
-""")
