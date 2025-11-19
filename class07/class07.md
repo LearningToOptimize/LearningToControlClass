@@ -9,8 +9,12 @@ Stochastic Optimal Control (SOC) is concerned with choosing control actions in s
 In real-world systems, uncertainties arise from sensor noise, model inaccuracies, and external disturbances. 
 SOC explicitly accounts for these uncertainties while attempting to optimize a performance objective.
 
+Notebook on Kalman Filtering available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Kalman\_Filtering.html).
+
 Files for this class are available [here](https://github.com/LearningToOptimize/LearningToControlClass/tree/main/class07).
-=======
+
+#
+
 Consider a discrete-time system with dynamics given by: $x_{t+1} = A * x_t + B * u_t + w_t$
 where $x_t$ represents the state at time $t$, $u_t$ is the control input, and $w_t$ is a stochastic disturbance, typically modeled as a zero-mean Gaussian with covariance $Q_w$. 
 
