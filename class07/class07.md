@@ -9,7 +9,13 @@ Stochastic Optimal Control (SOC) is concerned with choosing control actions in s
 In real-world systems, uncertainties arise from sensor noise, model inaccuracies, and external disturbances. 
 SOC explicitly accounts for these uncertainties while attempting to optimize a performance objective.
 
-Notebook on Kalman Filtering available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Kalman\_Filtering.html).
+Notebook on Kalman Filtering available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Kalman_Filtering.html).
+
+Notebook on LQG Control available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Linear_Quadratic_Guassian.html).
+
+Notebook on Robust Control available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Robust_Control.html).
+
+Notebook on Unscented Optimal Control and iLQG available [here](https://learningtooptimize.github.io/LearningToControlClass/dev/class07/Unscented_Control.html).
 
 Files for this class are available [here](https://github.com/LearningToOptimize/LearningToControlClass/tree/main/class07).
 
