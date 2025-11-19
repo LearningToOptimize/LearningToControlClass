@@ -19,7 +19,7 @@ plutos = [
     joinpath(repo_dir, "class03", "class3_pluto_notebook.html"),
     joinpath(repo_dir, "class05", "class05.html"),
     joinpath(repo_dir, "class07", "Kalman_Filtering.html"),
-    joinpath(repo_dir, "class07", "Linear_Quadratic_Gaussian.html"),
+    joinpath(repo_dir, "class07", "Linear_Quadratic_Guassian.html"),
     joinpath(repo_dir, "class07", "Robust_Control.html"),
     joinpath(repo_dir, "class07", "Unscented_Control.html"),
     joinpath(repo_dir, "class08", "class08.html"),
