@@ -476,7 +476,7 @@ begin
 		q_2 = x[2]
 		q_1_d = x[3]
 		q_2_d = x[4]
-		q_1_dd_numer = l * m_2 * sin(q_2) * q_2_d + u + m_2 * g * cos(q_2) * sin(q_2)
+		q_1_dd_numer = l * m_2 * sin(q_2) * q_2_d^2 + u + m_2 * g * cos(q_2) * sin(q_2)
 		q_1_dd_denom = m_1 + m_2 * (1 - cos(q_2) ^ 2)
 		q_1_dd = q_1_dd_numer / q_1_dd_denom
 		q_2_dd_numer = l * m_2 * cos(q_2) * sin(q_2) * q_2_d^2 + u * cos(q_2) + (m_1 + m_2) * g * sin(q_2)
