@@ -498,8 +498,8 @@ begin
 	@variable(cp_model, -u_max .<= u[1:N] .<= u_max, start=0)
 
 	# collocation points
-	@variable(cp_model, -d_max .<= q_1_c[i=1:N-1] .<= d_max, start=(2*i + 1)/(2 * N) * d)
-	@variable(cp_model, q_2_c[i=1:N-1], start=(2*i + 1)/(2 * N) * pi)
+	@variable(cp_model, -d_max .<= q_1_c[i=1:N-1] .<= d_max, start=(2*i - 1)/(2 * (N - 1)) * d)
+	@variable(cp_model, q_2_c[i=1:N-1], start=(2*i - 1)/(2 * (N - 1)) * pi)
 	@variable(cp_model, d_q_1_c[1:N-1], start=d/T)
 	@variable(cp_model, d_q_2_c[1:N-1], start=pi/T)
 	@variable(cp_model, -u_max .<= u_c[1:N-1] .<= u_max, start=0)
