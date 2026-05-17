@@ -491,8 +491,8 @@ begin
 	cp_model = Model(Ipopt.Optimizer)
 
 	# initial guess: uniform motion, no control
-	@variable(cp_model, -d_max .<= q_1[i=1:N] .<= d_max, start=i/N * d)
-	@variable(cp_model, q_2[i=1:N], start=i/N * pi)
+	@variable(cp_model, -d_max .<= q_1[i=1:N] .<= d_max, start=(i-1)/(N-1) * d)
+	@variable(cp_model, q_2[i=1:N], start=(i-1)/(N-1) * pi)
 	@variable(cp_model, d_q_1[1:N], start=d/T)
 	@variable(cp_model, d_q_2[1:N], start=pi/T)
 	@variable(cp_model, -u_max .<= u[1:N] .<= u_max, start=0)
