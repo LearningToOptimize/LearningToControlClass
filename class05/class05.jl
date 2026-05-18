@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.18
+# v0.20.24
 
 using Markdown
 using InteractiveUtils
@@ -476,7 +476,7 @@ begin
 		q_2 = x[2]
 		q_1_d = x[3]
 		q_2_d = x[4]
-		q_1_dd_numer = l * m_2 * sin(q_2) * q_2_d + u + m_2 * g * cos(q_2) * sin(q_2)
+		q_1_dd_numer = l * m_2 * sin(q_2) * q_2_d^2 + u + m_2 * g * cos(q_2) * sin(q_2)
 		q_1_dd_denom = m_1 + m_2 * (1 - cos(q_2) ^ 2)
 		q_1_dd = q_1_dd_numer / q_1_dd_denom
 		q_2_dd_numer = l * m_2 * cos(q_2) * sin(q_2) * q_2_d^2 + u * cos(q_2) + (m_1 + m_2) * g * sin(q_2)
@@ -491,18 +491,18 @@ begin
 	cp_model = Model(Ipopt.Optimizer)
 
 	# initial guess: uniform motion, no control
-	@variable(cp_model, -d_max .<= q_1[i=1:N] .<= d_max, start=i/N * d)
-	@variable(cp_model, q_2[i=1:N], start=i/N * pi)
-	@variable(cp_model, d_q_1[i=1:N], start=0)
-	@variable(cp_model, d_q_2[i=1:N], start=0)
+	@variable(cp_model, -d_max .<= q_1[i=1:N] .<= d_max, start=(i-1)/(N-1) * d)
+	@variable(cp_model, q_2[i=1:N], start=(i-1)/(N-1) * pi)
+	@variable(cp_model, d_q_1[1:N], start=d/T)
+	@variable(cp_model, d_q_2[1:N], start=pi/T)
 	@variable(cp_model, -u_max .<= u[1:N] .<= u_max, start=0)
 
 	# collocation points
-	@variable(cp_model, -d_max .<= q_1_c[1:N-1] .<= d_max)
-	@variable(cp_model, q_2_c[1:N-1])
-	@variable(cp_model, d_q_1_c[1:N-1])
-	@variable(cp_model, d_q_2_c[1:N-1])
-	@variable(cp_model, -u_max .<= u_c[1:N-1] .<= u_max)
+	@variable(cp_model, -d_max .<= q_1_c[i=1:N-1] .<= d_max, start=(2*i - 1)/(2 * (N - 1)) * d)
+	@variable(cp_model, q_2_c[i=1:N-1], start=(2*i - 1)/(2 * (N - 1)) * pi)
+	@variable(cp_model, d_q_1_c[1:N-1], start=d/T)
+	@variable(cp_model, d_q_2_c[1:N-1], start=pi/T)
+	@variable(cp_model, -u_max .<= u_c[1:N-1] .<= u_max, start=0)
 
 	@expression(cp_model, x[i=1:N], [q_1[i], q_2[i], d_q_1[i], d_q_2[i]])
 	@expression(cp_model, x_c[i=1:N-1], [q_1_c[i], q_2_c[i], d_q_1_c[i], d_q_2_c[i]])
